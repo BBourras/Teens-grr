@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Teens-grr - Accueil{% endblock %}
+
+{% block body %}
+<h1>Teens-grr : derniers posts</h1>
+
+<section>
+    <h2>Derniers posts</h2>
+    {% for post in latestPosts %}
+        <article>
+            <h3>{{ post.title }}</h3>
+            <p>{{ post.content|raw }}</p>
+            <p><small>Publié par {{ post.author.username }} le {{ post.createdAt|date('d/m/Y H:i') }}</small></p>
+
+            {# --- Votes --- #}
+            {% set voteData = votesInfo[post.id] %}
+            <div class="votes">
+                {% for type, count in voteData.score %}
+                    <button {% if not voteData.canVote %}disabled{% endif %}>
+                        {{ type|capitalize }} {{ count }}
+                    </button>
+                {% endfor %}
+            </div>
+
+            {# --- Commentaires visibles --- #}
+            <div class="comments">
+                <h4>Commentaires :</h4>
+                {% for comment in post.comments %}
+                    {% if comment.status.isVisible() %}
+                        <div class="comment">
+                            <p>{{ comment.content|raw }}</p>
+                            <p><small>Par {{ comment.author.username }} le {{ comment.createdAt|date('d/m/Y H:i') }}</small></p>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </article>
+    {% else %}
+        <p>Aucun post récent.</p>
+    {% endfor %}
+</section>
+
+<section>
+    <h2>Posts les plus populaires</h2>
+    {% for post in topPosts %}
+        <article>
+            <h3>{{ post.title }}</h3>
+            <p>{{ post.content|raw }}</p>
+            <p><small>Publié par {{ post.author.username }} le {{ post.createdAt|date('d/m/Y H:i') }}</small></p>
+
+            {# --- Votes --- #}
+            {% set voteData = votesInfo[post.id] %}
+            <div class="votes">
+                {% for type, count in voteData.score %}
+                    <button {% if not voteData.canVote %}disabled{% endif %}>
+                        {{ type|capitalize }} {{ count }}
+                    </button>
+                {% endfor %}
+            </div>
+        </article>
+    {% else %}
+        <p>Aucun post populaire pour le moment.</p>
+    {% endfor %}
+</section>
+
+{% endblock %}

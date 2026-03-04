@@ -2,15 +2,11 @@
 
 namespace App\Entity;
 
-use App\Enum\VoteType;
 use App\Repository\VoteRepository;
+use App\Enum\VoteType;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: VoteRepository::class)]
-#[ORM\UniqueConstraint(
-    name: 'uniq_user_post_vote',
-    columns: ['user_id', 'post_id']
-)]
 class Vote
 {
     #[ORM\Id]
@@ -18,32 +14,47 @@ class Vote
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(enumType: VoteType::class)]
-    private VoteType $type;
-
-    #[ORM\Column]
-    private \DateTimeImmutable $createdAt;
+    #[ORM\ManyToOne(inversedBy: 'votes')]
+    private ?\App\Entity\User $user = null; // nullable pour guests
 
     #[ORM\ManyToOne(inversedBy: 'votes')]
     #[ORM\JoinColumn(nullable: false)]
-    private Post $post;
+    private \App\Entity\Post $post;
 
-    #[ORM\ManyToOne(inversedBy: 'votes')]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?User $user = null;
+    #[ORM\Column(enumType: VoteType::class)]
+    private VoteType $type;
 
-    // Pour vote anonyme limité (1 vote / 24h)
-    #[ORM\Column(nullable: true)]
-    private ?string $ipAddress = null;
+    #[ORM\Column(length: 45, nullable: true)]
+    private ?string $guestIp = null;
 
-    public function __construct()
-    {
-        $this->createdAt = new \DateTimeImmutable();
-    }
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getUser(): ?\App\Entity\User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?\App\Entity\User $user): static
+    {
+        $this->user = $user;
+        return $this;
+    }
+
+    public function getPost(): \App\Entity\Post
+    {
+        return $this->post;
+    }
+
+    public function setPost(\App\Entity\Post $post): static
+    {
+        $this->post = $post;
+        return $this;
     }
 
     public function getType(): VoteType
@@ -57,41 +68,25 @@ class Vote
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getGuestIp(): ?string
+    {
+        return $this->guestIp;
+    }
+
+    public function setGuestIp(?string $guestIp): static
+    {
+        $this->guestIp = $guestIp;
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getPost(): Post
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        return $this->post;
-    }
-
-    public function setPost(Post $post): static
-    {
-        $this->post = $post;
-        return $this;
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): static
-    {
-        $this->user = $user;
-        return $this;
-    }
-
-    public function getIpAddress(): ?string
-    {
-        return $this->ipAddress;
-    }
-
-    public function setIpAddress(?string $ipAddress): static
-    {
-        $this->ipAddress = $ipAddress;
+        $this->createdAt = $createdAt;
         return $this;
     }
 }
