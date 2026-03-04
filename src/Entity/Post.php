@@ -2,8 +2,8 @@
 
 namespace App\Entity;
 
-use App\Enum\PostStatus;
 use App\Repository\PostRepository;
+use App\Enum\PostStatus;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -18,16 +18,13 @@ class Post
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private string $title;
+    private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $content;
-
-    #[ORM\Column(enumType: PostStatus::class)]
-    private PostStatus $status = PostStatus::PUBLISHED;
+    private ?string $content = null;
 
     #[ORM\Column]
-    private \DateTimeImmutable $createdAt;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
@@ -35,39 +32,34 @@ class Post
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $deletedAt = null;
 
-    #[ORM\Column]
-    private int $voteCount = 0;
-
-    #[ORM\Column]
-    private int $reportCount = 0;
+    #[ORM\Column(enumType: PostStatus::class)]
+    private PostStatus $status;
 
     #[ORM\ManyToOne(inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
-    private User $author;
+    private ?\App\Entity\User $author = null;
 
-    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Comment::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: \App\Entity\Comment::class, orphanRemoval: true)]
     private Collection $comments;
 
-    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Vote::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: \App\Entity\Vote::class, orphanRemoval: true)]
     private Collection $votes;
-
-    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Report::class, orphanRemoval: true)]
-    private Collection $reports;
 
     public function __construct()
     {
         $this->comments = new ArrayCollection();
         $this->votes = new ArrayCollection();
-        $this->reports = new ArrayCollection();
-        $this->createdAt = new \DateTimeImmutable();
+        $this->status = PostStatus::PUBLISHED;
     }
+
+    // --- Getters / Setters ---
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getTitle(): string
+    public function getTitle(): ?string
     {
         return $this->title;
     }
@@ -78,7 +70,7 @@ class Post
         return $this;
     }
 
-    public function getContent(): string
+    public function getContent(): ?string
     {
         return $this->content;
     }
@@ -89,25 +81,15 @@ class Post
         return $this;
     }
 
-    public function getStatus(): PostStatus
-    {
-        return $this->status;
-    }
-
-    public function setStatus(PostStatus $status): static
-    {
-        $this->status = $status;
-        return $this;
-    }
-
-    public function isVisible(): bool
-    {
-        return $this->status->isVisible();
-    }
-
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+        return $this;
     }
 
     public function getUpdatedAt(): ?\DateTimeImmutable
@@ -132,34 +114,68 @@ class Post
         return $this;
     }
 
-    public function getVoteCount(): int
+    public function getStatus(): PostStatus
     {
-        return $this->voteCount;
+        return $this->status;
     }
 
-    public function incrementVoteCount(): void
+    public function setStatus(PostStatus $status): static
     {
-        $this->voteCount++;
+        $this->status = $status;
+        return $this;
     }
 
-    public function getReportCount(): int
-    {
-        return $this->reportCount;
-    }
-
-    public function incrementReportCount(): void
-    {
-        $this->reportCount++;
-    }
-
-    public function getAuthor(): User
+    public function getAuthor(): ?\App\Entity\User
     {
         return $this->author;
     }
 
-    public function setAuthor(User $author): static
+    public function setAuthor(?\App\Entity\User $author): static
     {
         $this->author = $author;
+        return $this;
+    }
+
+    /** @return Collection<int, \App\Entity\Comment> */
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function addComment(\App\Entity\Comment $comment): static
+    {
+        if (!$this->comments->contains($comment)) {
+            $this->comments->add($comment);
+            $comment->setPost($this); // OK car non-nullable
+        }
+        return $this;
+    }
+
+    public function removeComment(\App\Entity\Comment $comment): static
+    {
+        $this->comments->removeElement($comment);
+        // plus besoin de setPost(null), post est non-nullable
+        return $this;
+    }
+
+    /** @return Collection<int, \App\Entity\Vote> */
+    public function getVotes(): Collection
+    {
+        return $this->votes;
+    }
+
+    public function addVote(\App\Entity\Vote $vote): static
+    {
+        if (!$this->votes->contains($vote)) {
+            $this->votes->add($vote);
+            $vote->setPost($this);
+        }
+        return $this;
+    }
+
+    public function removeVote(\App\Entity\Vote $vote): static
+    {
+        $this->votes->removeElement($vote);
         return $this;
     }
 }

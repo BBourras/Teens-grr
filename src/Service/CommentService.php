@@ -1,84 +1,126 @@
 <?php
 
-namespace App\Service;
+namespace App\Entity;
 
-use App\Entity\Comment;
-use App\Entity\Post;
-use App\Entity\User;
-use App\Enum\CommentStatus;
 use App\Repository\CommentRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\QueryBuilder;
+use App\Enum\CommentStatus;
+use Doctrine\ORM\Mapping as ORM;
 
-class CommentService
+#[ORM\Entity(repositoryClass: CommentRepository::class)]
+class Comment
 {
-    public function __construct(
-        private EntityManagerInterface $em,
-        private CommentRepository $commentRepository,
-    ) {}
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
-    public function create(Comment $comment, Post $post, User $author): void
+    #[ORM\Column(type: 'text')]
+    private ?string $content = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $deletedAt = null;
+
+    #[ORM\Column(enumType: CommentStatus::class)]
+    private CommentStatus $status;
+
+    #[ORM\ManyToOne(inversedBy: 'comments')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?\App\Entity\User $author = null;
+
+    #[ORM\ManyToOne(inversedBy: 'comments')]
+    #[ORM\JoinColumn(nullable: false)]
+    private \App\Entity\Post $post;
+
+    public function __construct()
     {
-        if ($post->getStatus()->isDeleted()) {
-            throw new \LogicException('Impossible de commenter un post supprimé.');
-        }
-
-        $comment->setAuthor($author);
-        $comment->setPost($post);
-        $comment->setCreatedAt(new \DateTimeImmutable());
-        $comment->setStatus(CommentStatus::PUBLISHED);
-
-        $this->em->persist($comment);
-        $this->em->flush();
+        $this->status = CommentStatus::PUBLISHED;
     }
 
-    public function update(Comment $comment): void
+    public function getId(): ?int
     {
-        $comment->setUpdatedAt(new \DateTimeImmutable());
-        $this->em->flush();
+        return $this->id;
     }
 
-    public function delete(Comment $comment): void
+    public function getContent(): ?string
     {
-        $comment->setStatus(CommentStatus::DELETED);
-        $comment->setDeletedAt(new \DateTimeImmutable());
-        $this->em->flush();
+        return $this->content;
     }
 
-    public function getPublishedForPostQueryBuilder(Post $post): QueryBuilder
+    public function setContent(string $content): static
     {
-        return $this->commentRepository->createQueryBuilder('c')
-            ->andWhere('c.post = :post')
-            ->andWhere('c.status = :status')
-            ->setParameter('post', $post)
-            ->setParameter('status', CommentStatus::PUBLISHED)
-            ->orderBy('c.createdAt', 'ASC');
+        $this->content = $content;
+        return $this;
     }
 
-    public function getPaginatedForPost(Post $post, int $page = 1, int $limit = 20): array
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
-        $qb = $this->getPublishedForPostQueryBuilder($post);
+        return $this->createdAt;
+    }
 
-        $offset = ($page - 1) * $limit;
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
 
-        $items = $qb
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
 
-        $countQb = clone $qb;
-        $countQb->resetDQLPart('select')
-                ->resetDQLPart('orderBy')
-                ->select('COUNT(c.id)');
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
+        return $this;
+    }
 
-        $total = (int) $countQb->getQuery()->getSingleScalarResult();
+    public function getDeletedAt(): ?\DateTimeImmutable
+    {
+        return $this->deletedAt;
+    }
 
-        return [
-            'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'pages' => (int) ceil($total / $limit),
-        ];
+    public function setDeletedAt(?\DateTimeImmutable $deletedAt): static
+    {
+        $this->deletedAt = $deletedAt;
+        return $this;
+    }
+
+    public function getStatus(): CommentStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(CommentStatus $status): static
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getAuthor(): ?\App\Entity\User
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?\App\Entity\User $author): static
+    {
+        $this->author = $author;
+        return $this;
+    }
+
+    public function getPost(): \App\Entity\Post
+    {
+        return $this->post;
+    }
+
+    public function setPost(\App\Entity\Post $post): static
+    {
+        $this->post = $post;
+        return $this;
     }
 }

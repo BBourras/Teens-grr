@@ -2,11 +2,8 @@
 
 namespace App\Entity;
 
-use App\Enum\CommentStatus;
 use App\Repository\CommentRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
+use App\Enum\CommentStatus;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
@@ -17,14 +14,11 @@ class Comment
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::TEXT)]
-    private string $content;
-
-    #[ORM\Column(enumType: CommentStatus::class)]
-    private CommentStatus $status = CommentStatus::PUBLISHED;
+    #[ORM\Column(type: 'text')]
+    private ?string $content = null;
 
     #[ORM\Column]
-    private \DateTimeImmutable $createdAt;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
@@ -32,32 +26,30 @@ class Comment
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $deletedAt = null;
 
-    #[ORM\Column]
-    private int $reportCount = 0;
+    #[ORM\Column(enumType: CommentStatus::class)]
+    private CommentStatus $status;
 
     #[ORM\ManyToOne(inversedBy: 'comments')]
     #[ORM\JoinColumn(nullable: false)]
-    private Post $post;
+    private ?\App\Entity\User $author = null;
 
     #[ORM\ManyToOne(inversedBy: 'comments')]
     #[ORM\JoinColumn(nullable: false)]
-    private User $author;
-
-    #[ORM\OneToMany(mappedBy: 'comment', targetEntity: Report::class, orphanRemoval: true)]
-    private Collection $reports;
+    private \App\Entity\Post $post;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
-        $this->reports = new ArrayCollection();
+        $this->status = CommentStatus::PUBLISHED;
     }
+
+    // --- Getters / Setters ---
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getContent(): string
+    public function getContent(): ?string
     {
         return $this->content;
     }
@@ -68,25 +60,15 @@ class Comment
         return $this;
     }
 
-    public function getStatus(): CommentStatus
-    {
-        return $this->status;
-    }
-
-    public function setStatus(CommentStatus $status): static
-    {
-        $this->status = $status;
-        return $this;
-    }
-
-    public function isVisible(): bool
-    {
-        return $this->status->isVisible();
-    }
-
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+        return $this;
     }
 
     public function getUpdatedAt(): ?\DateTimeImmutable
@@ -111,35 +93,36 @@ class Comment
         return $this;
     }
 
-    public function getReportCount(): int
+    public function getStatus(): CommentStatus
     {
-        return $this->reportCount;
+        return $this->status;
     }
 
-    public function incrementReportCount(): void
+    public function setStatus(CommentStatus $status): static
     {
-        $this->reportCount++;
-    }
-
-    public function getPost(): Post
-    {
-        return $this->post;
-    }
-
-    public function setPost(Post $post): static
-    {
-        $this->post = $post;
+        $this->status = $status;
         return $this;
     }
 
-    public function getAuthor(): User
+    public function getAuthor(): ?\App\Entity\User
     {
         return $this->author;
     }
 
-    public function setAuthor(User $author): static
+    public function setAuthor(?\App\Entity\User $author): static
     {
         $this->author = $author;
+        return $this;
+    }
+
+    public function getPost(): \App\Entity\Post
+    {
+        return $this->post;
+    }
+
+    public function setPost(\App\Entity\Post $post): static
+    {
+        $this->post = $post;
         return $this;
     }
 }
