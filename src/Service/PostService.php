@@ -16,12 +16,6 @@ class PostService
         private PostRepository $postRepository,
     ) {}
 
-    /*
-     |--------------------------------------------------------------------------
-     | CREATE
-     |--------------------------------------------------------------------------
-     */
-
     public function create(Post $post, User $author): void
     {
         $post->setAuthor($author);
@@ -32,38 +26,20 @@ class PostService
         $this->em->flush();
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | UPDATE
-     |--------------------------------------------------------------------------
-     */
-
     public function update(Post $post): void
     {
         $post->setUpdatedAt(new \DateTimeImmutable());
         $this->em->flush();
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | DELETE (SOFT DELETE)
-     |--------------------------------------------------------------------------
-     */
-
     public function delete(Post $post): void
     {
         $post->setStatus(PostStatus::DELETED);
         $post->setDeletedAt(new \DateTimeImmutable());
-
         $this->em->flush();
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | QUERY BUILDERS
-     |--------------------------------------------------------------------------
-     */
-
+    // Récupère les posts visibles les plus récents
     public function getLatestQueryBuilder(): QueryBuilder
     {
         return $this->postRepository->createQueryBuilder('p')
@@ -72,6 +48,7 @@ class PostService
             ->orderBy('p.createdAt', 'DESC');
     }
 
+    // Récupère les posts visibles les plus populaires
     public function getTopScoredQueryBuilder(): QueryBuilder
     {
         return $this->postRepository->createQueryBuilder('p')
@@ -92,12 +69,6 @@ class PostService
             ->orderBy('score', 'DESC');
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | PAGINATION GENERIC
-     |--------------------------------------------------------------------------
-     */
-
     public function getPaginated(QueryBuilder $qb, int $page = 1, int $limit = 10): array
     {
         $offset = ($page - 1) * $limit;
@@ -109,7 +80,6 @@ class PostService
 
         $items = $query->getResult();
 
-        // total count
         $countQb = clone $qb;
         $countQb->resetDQLPart('select')
                 ->resetDQLPart('orderBy')

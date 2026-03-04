@@ -17,16 +17,9 @@ class CommentService
         private CommentRepository $commentRepository,
     ) {}
 
-    /*
-     |--------------------------------------------------------------------------
-     | CREATE
-     |--------------------------------------------------------------------------
-     */
-
     public function create(Comment $comment, Post $post, User $author): void
     {
-        // On empêche commentaire sur post supprimé
-        if ($post->getDeletedAt() !== null) {
+        if ($post->getStatus()->isDeleted()) {
             throw new \LogicException('Impossible de commenter un post supprimé.');
         }
 
@@ -39,37 +32,18 @@ class CommentService
         $this->em->flush();
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | UPDATE
-     |--------------------------------------------------------------------------
-     */
-
     public function update(Comment $comment): void
     {
         $comment->setUpdatedAt(new \DateTimeImmutable());
         $this->em->flush();
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | DELETE (SOFT DELETE)
-     |--------------------------------------------------------------------------
-     */
-
     public function delete(Comment $comment): void
     {
         $comment->setStatus(CommentStatus::DELETED);
         $comment->setDeletedAt(new \DateTimeImmutable());
-
         $this->em->flush();
     }
-
-    /*
-     |--------------------------------------------------------------------------
-     | QUERY BUILDERS
-     |--------------------------------------------------------------------------
-     */
 
     public function getPublishedForPostQueryBuilder(Post $post): QueryBuilder
     {
@@ -81,17 +55,8 @@ class CommentService
             ->orderBy('c.createdAt', 'ASC');
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | PAGINATION
-     |--------------------------------------------------------------------------
-     */
-
-    public function getPaginatedForPost(
-        Post $post,
-        int $page = 1,
-        int $limit = 20
-    ): array {
+    public function getPaginatedForPost(Post $post, int $page = 1, int $limit = 20): array
+    {
         $qb = $this->getPublishedForPostQueryBuilder($post);
 
         $offset = ($page - 1) * $limit;
