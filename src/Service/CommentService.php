@@ -8,7 +8,6 @@ use App\Entity\User;
 use App\Enum\CommentStatus;
 use App\Repository\CommentRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\QueryBuilder;
 
 class CommentService
 {
@@ -17,14 +16,13 @@ class CommentService
         private CommentRepository $commentRepository,
     ) {}
 
+    /**
+     * Crée un commentaire
+     */
     public function create(Comment $comment, Post $post, User $author): void
     {
-        if ($post->getStatus()->isDeleted()) {
-            throw new \LogicException('Impossible de commenter un post supprimé.');
-        }
-
-        $comment->setAuthor($author);
         $comment->setPost($post);
+        $comment->setAuthor($author);
         $comment->setCreatedAt(new \DateTimeImmutable());
         $comment->setStatus(CommentStatus::PUBLISHED);
 
@@ -32,53 +30,56 @@ class CommentService
         $this->em->flush();
     }
 
-    public function update(Comment $comment): void
-    {
-        $comment->setUpdatedAt(new \DateTimeImmutable());
-        $this->em->flush();
-    }
-
+    /**
+     * Suppression logique (soft delete)
+     */
     public function delete(Comment $comment): void
     {
         $comment->setStatus(CommentStatus::DELETED);
         $comment->setDeletedAt(new \DateTimeImmutable());
+
         $this->em->flush();
     }
 
-    public function getPublishedForPostQueryBuilder(Post $post): QueryBuilder
+    /**
+     * Masquage automatique (ex: 5 signalements)
+     */
+    public function autoHide(Comment $comment): void
+    {
+        $comment->setStatus(CommentStatus::AUTO_HIDDEN);
+        $this->em->flush();
+    }
+
+    /**
+     * Masquage manuel par modérateur
+     */
+    public function hideByModerator(Comment $comment): void
+    {
+        $comment->setStatus(CommentStatus::HIDDEN_BY_MODERATOR);
+        $this->em->flush();
+    }
+
+    /**
+     * Restauration d’un commentaire
+     */
+    public function restore(Comment $comment): void
+    {
+        $comment->setStatus(CommentStatus::PUBLISHED);
+        $this->em->flush();
+    }
+
+    /**
+     * Récupère uniquement les commentaires visibles d’un post
+     */
+    public function getVisibleByPost(Post $post): array
     {
         return $this->commentRepository->createQueryBuilder('c')
             ->andWhere('c.post = :post')
             ->andWhere('c.status = :status')
             ->setParameter('post', $post)
             ->setParameter('status', CommentStatus::PUBLISHED)
-            ->orderBy('c.createdAt', 'ASC');
-    }
-
-    public function getPaginatedForPost(Post $post, int $page = 1, int $limit = 20): array
-    {
-        $qb = $this->getPublishedForPostQueryBuilder($post);
-
-        $offset = ($page - 1) * $limit;
-
-        $items = $qb
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
+            ->orderBy('c.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
-
-        $countQb = clone $qb;
-        $countQb->resetDQLPart('select')
-                ->resetDQLPart('orderBy')
-                ->select('COUNT(c.id)');
-
-        $total = (int) $countQb->getQuery()->getSingleScalarResult();
-
-        return [
-            'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'pages' => (int) ceil($total / $limit),
-        ];
     }
 }

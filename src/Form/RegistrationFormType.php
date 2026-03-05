@@ -16,26 +16,36 @@ class RegistrationFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+
             ->add('email', EmailType::class, [
+                'label' => 'Adresse email',
                 'constraints' => [
                     new Assert\NotBlank(),
                     new Assert\Email(),
                     new Assert\Length(max: 180),
                 ],
             ])
+
             ->add('username', TextType::class, [
+                'label' => 'Pseudo',
                 'constraints' => [
                     new Assert\NotBlank(),
                     new Assert\Length(min: 3, max: 50),
                 ],
             ])
+
             ->add('plainPassword', PasswordType::class, [
                 'mapped' => false,
+                'label' => 'Mot de passe',
                 'constraints' => [
                     new Assert\NotBlank(),
-                    new Assert\Length(min: 6, max: 255),
+                    new Assert\Length(
+                        min: 6,
+                        max: 4096
+                    ),
                 ],
             ])
+
         ;
     }
 

@@ -1,67 +1,59 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Teens-grr - Accueil{% endblock %}
+{% block title %}Accueil{% endblock %}
 
 {% block body %}
-<h1>Teens-grr : derniers posts</h1>
+<div class="container mt-4">
 
-<section>
-    <h2>Derniers posts</h2>
-    {% for post in latestPosts %}
-        <article>
-            <h3>{{ post.title }}</h3>
-            <p>{{ post.content|raw }}</p>
-            <p><small>Publié par {{ post.author.username }} le {{ post.createdAt|date('d/m/Y H:i') }}</small></p>
+    <h1 class="mb-4">Derniers posts</h1>
 
-            {# --- Votes --- #}
-            {% set voteData = votesInfo[post.id] %}
-            <div class="votes">
-                {% for type, count in voteData.score %}
-                    <button {% if not voteData.canVote %}disabled{% endif %}>
-                        {{ type|capitalize }} {{ count }}
-                    </button>
-                {% endfor %}
-            </div>
+    {% for data in postsData %}
+        {% set post = data.post %}
+        {% set comments = data.comments %}
+        {% set score = data.score %}
 
-            {# --- Commentaires visibles --- #}
-            <div class="comments">
-                <h4>Commentaires :</h4>
-                {% for comment in post.comments %}
-                    {% if comment.status.isVisible() %}
-                        <div class="comment">
-                            <p>{{ comment.content|raw }}</p>
-                            <p><small>Par {{ comment.author.username }} le {{ comment.createdAt|date('d/m/Y H:i') }}</small></p>
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+
+                <h3 class="card-title">{{ post.title }}</h3>
+
+                <p class="text-muted mb-2">
+                    Posté par <strong>{{ post.author.username }}</strong>
+                    le {{ post.createdAt|date('d/m/Y H:i') }}
+                </p>
+
+                <p class="card-text">
+                    {{ post.content }}
+                </p>
+
+                <div class="mb-2">
+                    <strong>Score :</strong> {{ score }}
+                </div>
+
+                <hr>
+
+                <h5>Commentaires ({{ comments|length }})</h5>
+
+                {% for comment in comments %}
+                    <div class="border rounded p-2 mb-2 bg-light">
+                        <strong>{{ comment.author.username }}</strong>
+                        <small class="text-muted">
+                            le {{ comment.createdAt|date('d/m/Y H:i') }}
+                        </small>
+                        <div>
+                            {{ comment.content }}
                         </div>
-                    {% endif %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucun commentaire pour le moment.</p>
                 {% endfor %}
+
             </div>
-        </article>
+        </div>
+
     {% else %}
-        <p>Aucun post récent.</p>
+        <p>Aucun post disponible.</p>
     {% endfor %}
-</section>
 
-<section>
-    <h2>Posts les plus populaires</h2>
-    {% for post in topPosts %}
-        <article>
-            <h3>{{ post.title }}</h3>
-            <p>{{ post.content|raw }}</p>
-            <p><small>Publié par {{ post.author.username }} le {{ post.createdAt|date('d/m/Y H:i') }}</small></p>
-
-            {# --- Votes --- #}
-            {% set voteData = votesInfo[post.id] %}
-            <div class="votes">
-                {% for type, count in voteData.score %}
-                    <button {% if not voteData.canVote %}disabled{% endif %}>
-                        {{ type|capitalize }} {{ count }}
-                    </button>
-                {% endfor %}
-            </div>
-        </article>
-    {% else %}
-        <p>Aucun post populaire pour le moment.</p>
-    {% endfor %}
-</section>
-
+</div>
 {% endblock %}

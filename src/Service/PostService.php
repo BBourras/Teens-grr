@@ -39,7 +39,7 @@ class PostService
         $this->em->flush();
     }
 
-    // Récupère les posts visibles les plus récents
+    // QueryBuilders existants
     public function getLatestQueryBuilder(): QueryBuilder
     {
         return $this->postRepository->createQueryBuilder('p')
@@ -48,7 +48,6 @@ class PostService
             ->orderBy('p.createdAt', 'DESC');
     }
 
-    // Récupère les posts visibles les plus populaires
     public function getTopScoredQueryBuilder(): QueryBuilder
     {
         return $this->postRepository->createQueryBuilder('p')
@@ -93,5 +92,22 @@ class PostService
             'page' => $page,
             'pages' => (int) ceil($total / $limit),
         ];
+    }
+
+    // 🔹 NOUVEAUX : méthodes concrètes pour HomeController
+    public function getLatest(int $limit = 10): array
+    {
+        return $this->getLatestQueryBuilder()
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function getTopScored(int $limit = 10): array
+    {
+        return $this->getTopScoredQueryBuilder()
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 }
