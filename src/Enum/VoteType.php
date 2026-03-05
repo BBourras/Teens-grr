@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enum;
 
 enum VoteType: string
@@ -8,12 +10,9 @@ enum VoteType: string
     case LAUGH = 'laugh';
     case ANGRY = 'angry';
 
-    /**
-     * Retourne l’emoji associé
-     */
     public function emoji(): string
     {
-        return match($this) {
+        return match ($this) {
             self::LIKE => '👍',
             self::LAUGH => '😂',
             self::ANGRY => '😡',
@@ -21,31 +20,47 @@ enum VoteType: string
     }
 
     /**
-     * Retourne le label lisible
+     * Clé de traduction (recommandé) : vote.like, vote.laugh, vote.angry
      */
-    public function label(): string
+    public function labelKey(): string
     {
-        return match($this) {
-            self::LIKE => 'Like',
-            self::LAUGH => 'Laugh',
-            self::ANGRY => 'Angry',
+        return match ($this) {
+            self::LIKE => 'vote.like',
+            self::LAUGH => 'vote.laugh',
+            self::ANGRY => 'vote.angry',
         };
     }
 
     /**
-     * Retourne tous les objets Enum
+     * Poids de la réaction pour calculer la popularité.
+     * Ajuste selon ton produit.
      */
-    public static function all(): array
+    public function weight(): int
     {
-        return self::cases();
+        return match ($this) {
+            self::LIKE => 1,
+            self::LAUGH => 2,
+            self::ANGRY => 1,
+        };
+    }
+
+    public static function values(): array
+    {
+        return array_map(static fn (self $t) => $t->value, self::cases());
     }
 
     /**
-     * Retourne toutes les valeurs string
-     * Utile pour les comparaisons ou clés de tableau
+     * Pour ChoiceType:
+     * Retourne: ['😂 vote.laugh' => 'laugh', ...]
+     * (Tu peux ensuite traduire les clés avec Symfony Translator.)
      */
-    public static function allValues(): array
+    public static function choices(): array
     {
-        return array_map(fn(self $t) => $t->value, self::cases());
+        $choices = [];
+        foreach (self::cases() as $case) {
+            $choices[$case->emoji() . ' ' . $case->labelKey()] = $case->value;
+        }
+
+        return $choices;
     }
 }
