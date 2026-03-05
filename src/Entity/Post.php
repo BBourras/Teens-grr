@@ -1,15 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
-use App\Repository\PostRepository;
 use App\Enum\PostStatus;
+use App\Repository\PostRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
+#[ORM\HasLifecycleCallbacks]
+#[ORM\Table(
+    indexes: [
+        new ORM\Index(name: 'idx_post_status', columns: ['status']),
+        new ORM\Index(name: 'idx_post_created_at', columns: ['created_at']),
+        new ORM\Index(name: 'idx_post_author', columns: ['author_id']),
+    ]
+)]
 class Post
 {
     #[ORM\Id]
@@ -18,153 +28,127 @@ class Post
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $title = null;
+    private string $title;
 
     #[ORM\Column(type: Types::TEXT)]
-    private ?string $content = null;
+    private string $content;
 
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $deletedAt = null;
 
     #[ORM\Column(enumType: PostStatus::class)]
-    private PostStatus $status;
+    private PostStatus $status = PostStatus::PUBLISHED;
+
+    /**
+     * Compteurs dénormalisés (très utiles pour Home: récents + populaires)
+     */
+    #[ORM\Column(options: ['default' => 0])]
+    private int $commentCount = 0;
+
+    #[ORM\Column(options: ['default' => 0])]
+    private int $reportCount = 0;
+
+    #[ORM\Column(options: ['default' => 0])]
+    private int $reactionScore = 0;
 
     #[ORM\ManyToOne(inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?\App\Entity\User $author = null;
+    private User $author;
 
-    #[ORM\OneToMany(mappedBy: 'post', targetEntity: \App\Entity\Comment::class, orphanRemoval: true)]
+    /** @var Collection<int, Comment> */
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Comment::class)]
+    #[ORM\OrderBy(['createdAt' => 'DESC'])]
     private Collection $comments;
 
-    #[ORM\OneToMany(mappedBy: 'post', targetEntity: \App\Entity\Vote::class, orphanRemoval: true)]
+    /** @var Collection<int, Vote> */
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Vote::class)]
     private Collection $votes;
+
+    /** @var Collection<int, Report> */
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Report::class)]
+    private Collection $reports;
+
+    /** @var Collection<int, ModerationActionLog> */
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: ModerationActionLog::class)]
+    private Collection $moderationLogs;
 
     public function __construct()
     {
         $this->comments = new ArrayCollection();
         $this->votes = new ArrayCollection();
-        $this->status = PostStatus::PUBLISHED;
+        $this->reports = new ArrayCollection();
+        $this->moderationLogs = new ArrayCollection();
     }
 
-    // --- Getters / Setters ---
-
-    public function getId(): ?int
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
     {
-        return $this->id;
+        $this->createdAt ??= new \DateTimeImmutable();
+        $this->status ??= PostStatus::PUBLISHED;
     }
 
-    public function getTitle(): ?string
+    #[ORM\PreUpdate]
+    public function onPreUpdate(): void
     {
-        return $this->title;
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
-    public function setTitle(string $title): static
-    {
-        $this->title = $title;
-        return $this;
-    }
+    public function getId(): ?int { return $this->id; }
 
-    public function getContent(): ?string
-    {
-        return $this->content;
-    }
+    public function getTitle(): string { return $this->title; }
+    public function setTitle(string $title): static { $this->title = $title; return $this; }
 
-    public function setContent(string $content): static
-    {
-        $this->content = $content;
-        return $this;
-    }
+    public function getContent(): string { return $this->content; }
+    public function setContent(string $content): static { $this->content = $content; return $this; }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
+    public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
+    public function getDeletedAt(): ?\DateTimeImmutable { return $this->deletedAt; }
+    public function setDeletedAt(?\DateTimeImmutable $deletedAt): static { $this->deletedAt = $deletedAt; return $this; }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
-    {
-        return $this->updatedAt;
-    }
+    public function getStatus(): PostStatus { return $this->status; }
+    public function setStatus(PostStatus $status): static { $this->status = $status; return $this; }
 
-    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
-        return $this;
-    }
+    public function getAuthor(): User { return $this->author; }
+    public function setAuthor(User $author): static { $this->author = $author; return $this; }
 
-    public function getDeletedAt(): ?\DateTimeImmutable
-    {
-        return $this->deletedAt;
-    }
+    public function getCommentCount(): int { return $this->commentCount; }
+    public function setCommentCount(int $commentCount): static { $this->commentCount = $commentCount; return $this; }
+    public function incrementCommentCount(int $by = 1): static { $this->commentCount += $by; return $this; }
+    public function decrementCommentCount(int $by = 1): static { $this->commentCount = max(0, $this->commentCount - $by); return $this; }
 
-    public function setDeletedAt(?\DateTimeImmutable $deletedAt): static
-    {
-        $this->deletedAt = $deletedAt;
-        return $this;
-    }
+    public function getReportCount(): int { return $this->reportCount; }
+    public function setReportCount(int $reportCount): static { $this->reportCount = $reportCount; return $this; }
+    public function incrementReportCount(int $by = 1): static { $this->reportCount += $by; return $this; }
 
-    public function getStatus(): PostStatus
-    {
-        return $this->status;
-    }
+    public function getReactionScore(): int { return $this->reactionScore; }
+    public function setReactionScore(int $reactionScore): static { $this->reactionScore = $reactionScore; return $this; }
+    public function incrementReactionScore(int $by): static { $this->reactionScore += $by; return $this; }
 
-    public function setStatus(PostStatus $status): static
-    {
-        $this->status = $status;
-        return $this;
-    }
+    /** @return Collection<int, Comment> */
+    public function getComments(): Collection { return $this->comments; }
 
-    public function getAuthor(): ?\App\Entity\User
-    {
-        return $this->author;
-    }
-
-    public function setAuthor(?\App\Entity\User $author): static
-    {
-        $this->author = $author;
-        return $this;
-    }
-
-    /** @return Collection<int, \App\Entity\Comment> */
-    public function getComments(): Collection
-    {
-        return $this->comments;
-    }
-
-    public function addComment(\App\Entity\Comment $comment): static
+    /** Important: owning side = Comment::post */
+    public function addComment(Comment $comment): static
     {
         if (!$this->comments->contains($comment)) {
             $this->comments->add($comment);
-            $comment->setPost($this); // OK car non-nullable
+            $comment->setPost($this);
         }
         return $this;
     }
 
-    public function removeComment(\App\Entity\Comment $comment): static
-    {
-        $this->comments->removeElement($comment);
-        // plus besoin de setPost(null), post est non-nullable
-        return $this;
-    }
+    /** @return Collection<int, Vote> */
+    public function getVotes(): Collection { return $this->votes; }
 
-    /** @return Collection<int, \App\Entity\Vote> */
-    public function getVotes(): Collection
-    {
-        return $this->votes;
-    }
-
-    public function addVote(\App\Entity\Vote $vote): static
+    public function addVote(Vote $vote): static
     {
         if (!$this->votes->contains($vote)) {
             $this->votes->add($vote);
@@ -173,9 +157,9 @@ class Post
         return $this;
     }
 
-    public function removeVote(\App\Entity\Vote $vote): static
-    {
-        $this->votes->removeElement($vote);
-        return $this;
-    }
+    /** @return Collection<int, Report> */
+    public function getReports(): Collection { return $this->reports; }
+
+    /** @return Collection<int, ModerationActionLog> */
+    public function getModerationLogs(): Collection { return $this->moderationLogs; }
 }
