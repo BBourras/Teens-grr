@@ -73,7 +73,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static { $this->email = strtolower($email); return $this; }
 
     public function getUsername(): string { return $this->username; }
-    public function setUsername(string $username): static { $this->username = $username; return $this; }
+    public function setUsername(string $username): static 
+    { 
+        $this->username = $username; return $this; 
+        }
 
     public function getUserIdentifier(): string { return $this->email; }
 

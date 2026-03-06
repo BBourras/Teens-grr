@@ -14,7 +14,7 @@ security:
 
     firewalls:
         dev:
-            pattern: ^/(_profiler|_wdt|assets|build)/
+            pattern: ^/(_(profiler|wdt)|css|images|js|build)/
             security: false
 
         main:

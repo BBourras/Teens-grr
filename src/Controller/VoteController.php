@@ -18,7 +18,7 @@ class VoteController extends AbstractController
         private Security $security
     ) {}
 
-    #[Route('/posts/{id}/votes/{type}', name: 'post_vote', methods: ['POST'])]
+    #[Route('/posts/{id}/vote/{type}', name: 'post_vote', methods: ['POST'])]
     public function vote(Post $post, string $type, Request $request): JsonResponse
     {
         $voteType = VoteType::tryFrom($type);
@@ -30,16 +30,27 @@ class VoteController extends AbstractController
         $user = $this->security->getUser();
         $ip = $request->getClientIp();
 
-        if (!$this->voteService->canVote($post, $user, $ip)) {
-            return $this->json(['error' => 'Vote not allowed'], 403);
-        }
+        if ($user) {
 
-        $vote = $this->voteService->vote($post, $user, $voteType, $ip);
+            if (!$this->voteService->canVote($post, $user)) {
+                return $this->json(['error' => 'Already voted'], 403);
+            }
+
+            $vote = $this->voteService->vote($post, $user, $voteType);
+
+        } else {
+
+            if (!$this->voteService->canVoteGuest($post, $request)) {
+                return $this->json(['error' => 'Guest vote limit reached'], 403);
+            }
+
+            $vote = $this->voteService->vote($post, null, $voteType, $ip);
+        }
 
         return $this->json([
             'success' => true,
             'scores' => $this->voteService->getScore($post),
-            'userVote' => $vote?->getType()->value
+            'userVote' => $vote->getType()->value
         ]);
     }
 }

@@ -1,193 +1,109 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service;
 
-use App\Entity\Post;
 use App\Entity\Comment;
-use App\Entity\User;
 use App\Entity\ModerationActionLog;
-use App\Enum\PostStatus;
+use App\Entity\Post;
+use App\Entity\User;
 use App\Enum\CommentStatus;
 use App\Enum\ModerationActionType;
+use App\Enum\PostStatus;
 use Doctrine\ORM\EntityManagerInterface;
 
 class ModerationService
 {
-    public function __construct(
-        private EntityManagerInterface $em,
-    ) {}
+    public function __construct(private EntityManagerInterface $em) {}
 
-    /*
-     |--------------------------------------------------------------------------
-     | POST MODERATION
-     |--------------------------------------------------------------------------
+    /**
+     * Masquer un post ou commentaire manuellement par un modérateur
      */
-
-    public function hidePost(Post $post, User $moderator, ?string $reason = null): void
+    public function hideByModerator(Post|Comment $entity, User $moderator, ?string $reason = null): void
     {
-        if ($post->getStatus() === PostStatus::HIDDEN_BY_MODERATOR) {
-            return;
+        $previousStatus = $this->getStatusString($entity);
+
+        // Définir le nouveau statut
+        if ($entity instanceof Post) {
+            $entity->setStatus(PostStatus::HIDDEN_BY_MODERATOR);
+        } elseif ($entity instanceof Comment) {
+            $entity->setStatus(CommentStatus::HIDDEN_BY_MODERATOR);
         }
 
-        $previousStatus = $post->getStatus();
-
-        $post->setStatus(PostStatus::HIDDEN_BY_MODERATOR);
-
-        $this->logAction(
-            actionType: ModerationActionType::MODERATOR_HIDDEN,
-            moderator: $moderator,
-            previousStatus: $previousStatus->value,
-            newStatus: PostStatus::HIDDEN_BY_MODERATOR->value,
-            post: $post,
-            reason: $reason
-        );
-
+        $this->logAction($entity, $moderator, ModerationActionType::MODERATOR_HIDE, $previousStatus, $this->getStatusString($entity), $reason);
         $this->em->flush();
     }
 
-    public function restorePost(Post $post, User $moderator, ?string $reason = null): void
-    {
-        if ($post->getStatus() === PostStatus::PUBLISHED) {
-            return;
-        }
-
-        $previousStatus = $post->getStatus();
-
-        $post->setStatus(PostStatus::PUBLISHED);
-
-        $this->logAction(
-            actionType: ModerationActionType::RESTORED,
-            moderator: $moderator,
-            previousStatus: $previousStatus->value,
-            newStatus: PostStatus::PUBLISHED->value,
-            post: $post,
-            reason: $reason
-        );
-
-        $this->em->flush();
-    }
-
-    public function deletePost(Post $post, User $moderator, ?string $reason = null): void
-    {
-        if ($post->getStatus() === PostStatus::DELETED) {
-            return;
-        }
-
-        $previousStatus = $post->getStatus();
-
-        $post->setStatus(PostStatus::DELETED);
-        $post->setDeletedAt(new \DateTimeImmutable());
-
-        $this->logAction(
-            actionType: ModerationActionType::DELETED,
-            moderator: $moderator,
-            previousStatus: $previousStatus->value,
-            newStatus: PostStatus::DELETED->value,
-            post: $post,
-            reason: $reason
-        );
-
-        $this->em->flush();
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | COMMENT MODERATION
-     |--------------------------------------------------------------------------
+    /**
+     * Restaurer un post ou commentaire masqué
      */
-
-    public function hideComment(Comment $comment, User $moderator, ?string $reason = null): void
+    public function restore(Post|Comment $entity, User $moderator, ?string $reason = null): void
     {
-        if ($comment->getStatus() === CommentStatus::HIDDEN_BY_MODERATOR) {
-            return;
+        $previousStatus = $this->getStatusString($entity);
+
+        if ($entity instanceof Post) {
+            $entity->setStatus(PostStatus::PUBLISHED);
+        } elseif ($entity instanceof Comment) {
+            $entity->setStatus(CommentStatus::PUBLISHED);
         }
 
-        $previousStatus = $comment->getStatus();
-
-        $comment->setStatus(CommentStatus::HIDDEN_BY_MODERATOR);
-
-        $this->logAction(
-            actionType: ModerationActionType::MODERATOR_HIDDEN,
-            moderator: $moderator,
-            previousStatus: $previousStatus->value,
-            newStatus: CommentStatus::HIDDEN_BY_MODERATOR->value,
-            comment: $comment,
-            reason: $reason
-        );
-
+        $this->logAction($entity, $moderator, ModerationActionType::RESTORE, $previousStatus, $this->getStatusString($entity), $reason);
         $this->em->flush();
     }
 
-    public function restoreComment(Comment $comment, User $moderator, ?string $reason = null): void
-    {
-        if ($comment->getStatus() === CommentStatus::PUBLISHED) {
-            return;
-        }
-
-        $previousStatus = $comment->getStatus();
-
-        $comment->setStatus(CommentStatus::PUBLISHED);
-
-        $this->logAction(
-            actionType: ModerationActionType::RESTORED,
-            moderator: $moderator,
-            previousStatus: $previousStatus->value,
-            newStatus: CommentStatus::PUBLISHED->value,
-            comment: $comment,
-            reason: $reason
-        );
-
-        $this->em->flush();
-    }
-
-    public function deleteComment(Comment $comment, User $moderator, ?string $reason = null): void
-    {
-        if ($comment->getStatus() === CommentStatus::DELETED) {
-            return;
-        }
-
-        $previousStatus = $comment->getStatus();
-
-        $comment->setStatus(CommentStatus::DELETED);
-        $comment->setDeletedAt(new \DateTimeImmutable());
-
-        $this->logAction(
-            actionType: ModerationActionType::DELETED,
-            moderator: $moderator,
-            previousStatus: $previousStatus->value,
-            newStatus: CommentStatus::DELETED->value,
-            comment: $comment,
-            reason: $reason
-        );
-
-        $this->em->flush();
-    }
-
-    /*
-     |--------------------------------------------------------------------------
-     | PRIVATE LOGGER
-     |--------------------------------------------------------------------------
+    /**
+     * Supprimer un post ou commentaire
      */
+    public function delete(Post|Comment $entity, User $moderator, ?string $reason = null): void
+    {
+        $previousStatus = $this->getStatusString($entity);
 
+        if ($entity instanceof Post) {
+            $entity->setStatus(PostStatus::DELETED);
+        } elseif ($entity instanceof Comment) {
+            $entity->setStatus(CommentStatus::DELETED);
+        }
+
+        $this->logAction($entity, $moderator, ModerationActionType::MODERATOR_DELETE, $previousStatus, $this->getStatusString($entity), $reason);
+        $this->em->flush();
+    }
+
+    /**
+     * Crée un log de modération
+     */
     private function logAction(
-        ModerationActionType $actionType,
+        Post|Comment $entity,
         User $moderator,
-        ?string $previousStatus = null,
-        ?string $newStatus = null,
-        ?Post $post = null,
-        ?Comment $comment = null,
+        ModerationActionType $actionType,
+        string $previousStatus,
+        string $newStatus,
         ?string $reason = null
     ): void {
         $log = new ModerationActionLog();
-
-        $log->setActionType($actionType)
-            ->setModerator($moderator)
+        $log->setModerator($moderator)
+            ->setActionType($actionType)
             ->setPreviousStatus($previousStatus)
             ->setNewStatus($newStatus)
-            ->setReason($reason)
-            ->setPost($post)
-            ->setComment($comment);
+            ->setReason($reason);
 
+        if ($entity instanceof Post) {
+            $log->setPost($entity);
+        } else {
+            $log->setComment($entity);
+        }
+
+        $log->assertExactlyOneTarget();
         $this->em->persist($log);
+    }
+
+    /**
+     * Retourne le statut sous forme de string (PostStatus ou CommentStatus)
+     */
+    private function getStatusString(Post|Comment $entity): string
+    {
+        return $entity instanceof Post
+            ? $entity->getStatus()->value
+            : $entity->getStatus()->value;
     }
 }

@@ -21,10 +21,9 @@ class CommentService
      */
     public function create(Comment $comment, Post $post, User $author): void
     {
-        $comment->setPost($post);
-        $comment->setAuthor($author);
-        $comment->setCreatedAt(new \DateTimeImmutable());
-        $comment->setStatus(CommentStatus::PUBLISHED);
+        $comment->setPost($post)
+                ->setAuthor($author)
+                ->setStatus(CommentStatus::PUBLISHED);
 
         $this->em->persist($comment);
         $this->em->flush();
@@ -35,8 +34,8 @@ class CommentService
      */
     public function delete(Comment $comment): void
     {
-        $comment->setStatus(CommentStatus::DELETED);
-        $comment->setDeletedAt(new \DateTimeImmutable());
+        $comment->setStatus(CommentStatus::DELETED)
+                ->setDeletedAt(new \DateTimeImmutable());
 
         $this->em->flush();
     }

@@ -103,4 +103,10 @@ class Comment
 
     /** @return Collection<int, ModerationActionLog> */
     public function getModerationLogs(): Collection { return $this->moderationLogs; }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
 }

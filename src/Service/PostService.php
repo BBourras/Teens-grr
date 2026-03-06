@@ -16,30 +16,40 @@ class PostService
         private PostRepository $postRepository,
     ) {}
 
+    /**
+     * Crée un post
+     */
     public function create(Post $post, User $author): void
     {
-        $post->setAuthor($author);
-        $post->setCreatedAt(new \DateTimeImmutable());
-        $post->setStatus(PostStatus::PUBLISHED);
+        $post->setAuthor($author)
+             ->setStatus(PostStatus::PUBLISHED);
 
         $this->em->persist($post);
         $this->em->flush();
     }
 
+    /**
+     * Met à jour un post
+     */
     public function update(Post $post): void
     {
-        $post->setUpdatedAt(new \DateTimeImmutable());
         $this->em->flush();
     }
 
+    /**
+     * Suppression logique (soft delete)
+     */
     public function delete(Post $post): void
     {
-        $post->setStatus(PostStatus::DELETED);
-        $post->setDeletedAt(new \DateTimeImmutable());
+        $post->setStatus(PostStatus::DELETED)
+             ->setDeletedAt(new \DateTimeImmutable());
+
         $this->em->flush();
     }
 
-    // QueryBuilders existants
+    /**
+     * QueryBuilder pour les derniers posts publiés
+     */
     public function getLatestQueryBuilder(): QueryBuilder
     {
         return $this->postRepository->createQueryBuilder('p')
@@ -48,6 +58,9 @@ class PostService
             ->orderBy('p.createdAt', 'DESC');
     }
 
+    /**
+     * QueryBuilder pour les posts les mieux notés
+     */
     public function getTopScoredQueryBuilder(): QueryBuilder
     {
         return $this->postRepository->createQueryBuilder('p')
@@ -68,6 +81,9 @@ class PostService
             ->orderBy('score', 'DESC');
     }
 
+    /**
+     * Pagination
+     */
     public function getPaginated(QueryBuilder $qb, int $page = 1, int $limit = 10): array
     {
         $offset = ($page - 1) * $limit;
@@ -94,7 +110,9 @@ class PostService
         ];
     }
 
-    // 🔹 NOUVEAUX : méthodes concrètes pour HomeController
+    /**
+     * Récupère les derniers posts
+     */
     public function getLatest(int $limit = 10): array
     {
         return $this->getLatestQueryBuilder()
@@ -103,6 +121,9 @@ class PostService
             ->getResult();
     }
 
+    /**
+     * Récupère les posts les mieux notés
+     */
     public function getTopScored(int $limit = 10): array
     {
         return $this->getTopScoredQueryBuilder()

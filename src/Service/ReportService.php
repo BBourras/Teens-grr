@@ -4,8 +4,8 @@ namespace App\Service;
 
 use App\Entity\Post;
 use App\Entity\Comment;
-use App\Entity\Report;
 use App\Entity\User;
+use App\Entity\Report;
 use App\Entity\ModerationActionLog;
 use App\Enum\PostStatus;
 use App\Enum\CommentStatus;
@@ -15,42 +15,43 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class ReportService
 {
+    private const AUTO_HIDE_THRESHOLD = 5;
+
     public function __construct(
         private EntityManagerInterface $em,
-        private ReportRepository $reportRepository,
+        private ReportRepository $reportRepository
     ) {}
 
     public function reportPost(Post $post, User $user, ?string $reason = null): void
     {
-        // Vérifie si déjà signalé
-        if ($this->reportRepository->findOneBy([
-            'post' => $post,
-            'user' => $user
-        ])) {
+        // Vérifie si l'utilisateur a déjà signalé ce post
+        if ($this->reportRepository->findOneBy(['post' => $post, 'user' => $user])) {
             return;
         }
 
-        $report = new Report();
-        $report->setPost($post)
-               ->setUser($user)
-               ->setReason($reason);
+        $report = (new Report())
+            ->setPost($post)
+            ->setUser($user)
+            ->setReason($reason);
 
-        $post->incrementReportCount();
+        $post->incrementReportCount(); // méthode dans l'entité Post
 
         $this->em->persist($report);
 
-        // Auto-masquage à 5 signalements
-        if ($post->getReportCount() >= 5 && $post->getStatus() === PostStatus::PUBLISHED) {
+        // Masquage automatique si seuil dépassé
+        if ($post->getReportCount() >= self::AUTO_HIDE_THRESHOLD
+            && $post->getStatus() === PostStatus::PUBLISHED) {
 
             $previousStatus = $post->getStatus();
 
             $post->setStatus(PostStatus::AUTO_HIDDEN);
 
             $log = new ModerationActionLog();
-            $log->setActionType(ModerationActionType::AUTO_HIDDEN)
+            $log
+                ->setActionType(ModerationActionType::AUTO_HIDE)
                 ->setPreviousStatus($previousStatus->value)
                 ->setNewStatus(PostStatus::AUTO_HIDDEN->value)
-                ->setModerator($user) // auteur du 5e signalement
+                ->setModerator($user)
                 ->setPost($post);
 
             $this->em->persist($log);
@@ -61,30 +62,29 @@ class ReportService
 
     public function reportComment(Comment $comment, User $user, ?string $reason = null): void
     {
-        if ($this->reportRepository->findOneBy([
-            'comment' => $comment,
-            'user' => $user
-        ])) {
+        if ($this->reportRepository->findOneBy(['comment' => $comment, 'user' => $user])) {
             return;
         }
 
-        $report = new Report();
-        $report->setComment($comment)
-               ->setUser($user)
-               ->setReason($reason);
+        $report = (new Report())
+            ->setComment($comment)
+            ->setUser($user)
+            ->setReason($reason);
 
-        $comment->incrementReportCount();
+        $comment->incrementReportCount(); // méthode dans l'entité Comment
 
         $this->em->persist($report);
 
-        if ($comment->getReportCount() >= 5 && $comment->getStatus() === CommentStatus::PUBLISHED) {
+        if ($comment->getReportCount() >= self::AUTO_HIDE_THRESHOLD
+            && $comment->getStatus() === CommentStatus::PUBLISHED) {
 
             $previousStatus = $comment->getStatus();
 
             $comment->setStatus(CommentStatus::AUTO_HIDDEN);
 
             $log = new ModerationActionLog();
-            $log->setActionType(ModerationActionType::AUTO_HIDDEN)
+            $log
+                ->setActionType(ModerationActionType::AUTO_HIDE)
                 ->setPreviousStatus($previousStatus->value)
                 ->setNewStatus(CommentStatus::AUTO_HIDDEN->value)
                 ->setModerator($user)

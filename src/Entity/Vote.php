@@ -62,22 +62,69 @@ class Vote
         $this->createdAt ??= new \DateTimeImmutable();
     }
 
-    public function getId(): ?int { return $this->id; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
-    public function getUser(): ?User { return $this->user; }
-    public function setUser(?User $user): static { $this->user = $user; return $this; }
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+        return $this;
+    }
 
-    public function getPost(): Post { return $this->post; }
-    public function setPost(Post $post): static { $this->post = $post; return $this; }
+    public function getPost(): Post
+    {
+        return $this->post;
+    }
+    public function setPost(Post $post): static
+    {
+        $this->post = $post;
+        return $this;
+    }
 
-    public function getType(): VoteType { return $this->type; }
-    public function setType(VoteType $type): static { $this->type = $type; return $this; }
+    public function getType(): VoteType
+    {
+        return $this->type;
+    }
+    public function setType(VoteType $type): static
+    {
+        $this->type = $type;
+        return $this;
+    }
 
-    public function getGuestKey(): ?string { return $this->guestKey; }
-    public function setGuestKey(?string $guestKey): static { $this->guestKey = $guestKey; return $this; }
+    public function getGuestKey(): ?string
+    {
+        return $this->guestKey;
+    }
+    public function setGuestKey(?string $guestKey): static
+    {
+        $this->guestKey = $guestKey;
+        return $this;
+    }
 
-    public function getGuestIpHash(): ?string { return $this->guestIpHash; }
-    public function setGuestIpHash(?string $guestIpHash): static { $this->guestIpHash = $guestIpHash; return $this; }
+    public function getGuestIpHash(): ?string
+    {
+        return $this->guestIpHash;
+    }
+    public function setGuestIpHash(?string $guestIpHash): static
+    {
+        $this->guestIpHash = $guestIpHash;
+        return $this;
+    }
 
-    public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
 }
