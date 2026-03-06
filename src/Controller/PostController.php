@@ -20,19 +20,15 @@ class PostController extends AbstractController
     ) {}
 
     #[Route('/', name: 'post_list', methods: ['GET'])]
-    public function list(Request $request): Response
+    public function list(): Response
     {
-        $page = max(1, (int) $request->query->get('page', 1));
-        $qb = $this->postService->getLatestQueryBuilder();
-
-        $pagination = $this->postService->getPaginated($qb, $page, 10);
-
+        $posts = $this->postService->getLatest(10); // ou pagination via getPaginated
         return $this->render('post/list.html.twig', [
-            'pagination' => $pagination,
+            'posts' => $posts,
         ]);
     }
 
-    #[Route('/new', name: 'post_new', methods: ['GET','POST'])]
+    #[Route('/new', name: 'post_new', methods: ['GET', 'POST'])]
     public function new(Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -42,9 +38,8 @@ class PostController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->postService->create($post, $this->getUser());
-            $this->addFlash('success', 'Post créé !');
-
+            $this->postService->create($post, $this->security->getUser());
+            $this->addFlash('success', 'Post créé avec succès.');
             return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
         }
 
@@ -53,17 +48,15 @@ class PostController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'post_show', methods: ['GET'])]
+    #[Route('/{postid}', name: 'post_show', methods: ['GET'])]
     public function show(Post $post): Response
     {
-        $this->denyAccessUnlessGranted('POST_VIEW', $post);
-
         return $this->render('post/show.html.twig', [
             'post' => $post,
         ]);
     }
 
-    #[Route('/{id}/edit', name: 'post_edit', methods: ['GET','POST'])]
+    #[Route('/{postid}/edit', name: 'post_edit', methods: ['GET', 'POST'])]
     public function edit(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('POST_EDIT', $post);
@@ -73,8 +66,7 @@ class PostController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->postService->update($post);
-            $this->addFlash('success', 'Post mis à jour !');
-
+            $this->addFlash('success', 'Post mis à jour avec succès.');
             return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
         }
 
@@ -84,13 +76,13 @@ class PostController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'post_delete', methods: ['POST', 'DELETE'])]
+    #[Route('/{postid}/delete', name: 'post_delete', methods: ['POST', 'DELETE'])]
     public function delete(Post $post): Response
     {
         $this->denyAccessUnlessGranted('POST_DELETE', $post);
 
         $this->postService->delete($post);
-        $this->addFlash('success', 'Post supprimé !');
+        $this->addFlash('success', 'Post supprimé avec succès.');
 
         return $this->redirectToRoute('post_list');
     }

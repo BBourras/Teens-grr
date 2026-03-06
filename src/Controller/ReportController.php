@@ -15,7 +15,7 @@ class ReportController extends AbstractController
 {
     public function __construct(private ReportService $reportService) {}
 
-    #[Route('/posts/{id}/report', name: 'report_post', methods: ['POST'])]
+    #[Route('/posts/{postid}/report', name: 'report_post', methods: ['POST'])]
     public function reportPost(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -28,7 +28,7 @@ class ReportController extends AbstractController
         return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
     }
 
-    #[Route('/comments/{id}/report', name: 'report_comment', methods: ['POST'])]
+    #[Route('/comments/{commentid}/report', name: 'report_comment', methods: ['POST'])]
     public function reportComment(Comment $comment, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
