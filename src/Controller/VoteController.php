@@ -3,54 +3,39 @@
 namespace App\Controller;
 
 use App\Entity\Post;
+use App\Entity\User;
 use App\Enum\VoteType;
 use App\Service\VoteService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[Route('/votes')]
 class VoteController extends AbstractController
 {
-    public function __construct(
-        private VoteService $voteService,
-        private Security $security
-    ) {}
+    public function __construct(private VoteService $voteService) {}
 
-    #[Route('/posts/{id}/vote/{type}', name: 'post_vote', methods: ['POST'])]
-    public function vote(Post $post, string $type, Request $request): JsonResponse
+    #[Route('/post/{id}', name: 'vote_post', methods: ['POST'])]
+    public function vote(Post $post, Request $request): Response
     {
-        $voteType = VoteType::tryFrom($type);
+        $user = $this->getUser();
+        $voteType = $request->request->get('type');
 
-        if (!$voteType) {
-            return $this->json(['error' => 'Invalid vote type'], 400);
+        if (!in_array($voteType, array_map(fn(VoteType $v) => $v->value, VoteType::cases()))) {
+            $this->addFlash('error', 'Type de vote invalide.');
+            return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
         }
 
-        $user = $this->security->getUser();
-        $ip = $request->getClientIp();
+        $this->voteService->vote(
+            $post,
+            $user ?: null,
+            VoteType::from($voteType),
+            $request->getClientIp()
+        );
 
-        if ($user) {
+        $this->addFlash('success', 'Votre vote a été pris en compte !');
 
-            if (!$this->voteService->canVote($post, $user)) {
-                return $this->json(['error' => 'Already voted'], 403);
-            }
-
-            $vote = $this->voteService->vote($post, $user, $voteType);
-
-        } else {
-
-            if (!$this->voteService->canVoteGuest($post, $request)) {
-                return $this->json(['error' => 'Guest vote limit reached'], 403);
-            }
-
-            $vote = $this->voteService->vote($post, null, $voteType, $ip);
-        }
-
-        return $this->json([
-            'success' => true,
-            'scores' => $this->voteService->getScore($post),
-            'userVote' => $vote->getType()->value
-        ]);
+        return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
     }
 }
