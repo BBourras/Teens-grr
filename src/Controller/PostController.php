@@ -40,15 +40,15 @@ class PostController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->postService->create($post, $this->security->getUser());
             $this->addFlash('success', 'Post créé avec succès.');
-            return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
+            return $this->redirectToRoute('post_show', ['postId' => $post->getId()]);
         }
 
         return $this->render('post/new.html.twig', [
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
-    #[Route('/{postid}', name: 'post_show', methods: ['GET'])]
+    #[Route('/{postId}', name: 'post_show', methods: ['GET'])]
     public function show(Post $post): Response
     {
         return $this->render('post/show.html.twig', [
@@ -56,7 +56,7 @@ class PostController extends AbstractController
         ]);
     }
 
-    #[Route('/{postid}/edit', name: 'post_edit', methods: ['GET', 'POST'])]
+    #[Route('/{postId}/edit', name: 'post_edit', methods: ['GET', 'POST'])]
     public function edit(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('POST_EDIT', $post);
@@ -67,16 +67,16 @@ class PostController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->postService->update($post);
             $this->addFlash('success', 'Post mis à jour avec succès.');
-            return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
+            return $this->redirectToRoute('post_show', ['postId' => $post->getId()]);
         }
 
         return $this->render('post/edit.html.twig', [
-            'form' => $form,
+            'form' => $form->createView(),
             'post' => $post,
         ]);
     }
 
-    #[Route('/{postid}/delete', name: 'post_delete', methods: ['POST', 'DELETE'])]
+    #[Route('/{postId}/delete', name: 'post_delete', methods: ['POST', 'DELETE'])]
     public function delete(Post $post): Response
     {
         $this->denyAccessUnlessGranted('POST_DELETE', $post);

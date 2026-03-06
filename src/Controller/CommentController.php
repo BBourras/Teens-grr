@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/posts/{postid}/comments')]
+#[Route('/posts/{postId}/comments')]
 class CommentController extends AbstractController
 {
     public function __construct(
@@ -20,6 +20,9 @@ class CommentController extends AbstractController
         private Security $security
     ) {}
 
+    /**
+     * Création d'un commentaire sur un post
+     */
     #[Route('', name: 'comment_create', methods: ['POST'])]
     public function create(Post $post, Request $request): Response
     {
@@ -34,17 +37,25 @@ class CommentController extends AbstractController
             $this->addFlash('success', 'Commentaire ajouté avec succès.');
         }
 
-        return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
+        return $this->redirectToRoute('post_show', ['postId' => $post->getId()]);
     }
 
-    #[Route('/{commentid}/delete', name: 'comment_delete', methods: ['POST', 'DELETE'])]
+    /**
+     * Suppression d'un commentaire
+     */
+    #[Route('/{commentId}/delete', name: 'comment_delete', methods: ['POST', 'DELETE'])]
     public function delete(Post $post, Comment $comment): Response
     {
         $this->denyAccessUnlessGranted('COMMENT_DELETE', $comment);
 
+        // Vérifie que le commentaire appartient bien au post
+        if ($comment->getPost() !== $post) {
+            throw $this->createNotFoundException('Commentaire non trouvé pour ce post.');
+        }
+
         $this->commentService->delete($comment);
         $this->addFlash('success', 'Commentaire supprimé avec succès.');
 
-        return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
+        return $this->redirectToRoute('post_show', ['postId' => $post->getId()]);
     }
 }

@@ -45,7 +45,7 @@ security:
         - { path: ^/posts/\d+$, roles: PUBLIC_ACCESS, methods: [GET] }
 
         # Voting (public)
-        - { path: ^/votes/posts/\d+/vote$, roles: PUBLIC_ACCESS, methods: [POST] }
+        - { path: ^/posts/\d+/vote$, roles: PUBLIC_ACCESS, methods: [POST] }
 
         # Posts management
         - { path: ^/posts/new$, roles: ROLE_USER }

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Post;
 use App\Entity\Comment;
+use App\Entity\User;
 use App\Service\ReportService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,29 +16,37 @@ class ReportController extends AbstractController
 {
     public function __construct(private ReportService $reportService) {}
 
-    #[Route('/posts/{postid}/report', name: 'report_post', methods: ['POST'])]
+    /**
+     * Signaler un post
+     */
+    #[Route('/posts/{postId}/report', name: 'report_post', methods: ['POST'])]
     public function reportPost(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
-
+        /** @var User $user */
+        $user = $this->getUser();
         $reason = $request->request->get('reason');
-        $this->reportService->reportPost($post, $this->getUser(), $reason);
+
+        $this->reportService->reportPost($post, $user, $reason);
 
         $this->addFlash('success', 'Post signalé.');
-
-        return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
+        return $this->redirectToRoute('post_show', ['postId' => $post->getId()]);
     }
 
-    #[Route('/comments/{commentid}/report', name: 'report_comment', methods: ['POST'])]
+    /**
+     * Signaler un commentaire
+     */
+    #[Route('/comments/{commentId}/report', name: 'report_comment', methods: ['POST'])]
     public function reportComment(Comment $comment, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
-
+        /** @var User $user */
+        $user = $this->getUser();
         $reason = $request->request->get('reason');
-        $this->reportService->reportComment($comment, $this->getUser(), $reason);
+
+        $this->reportService->reportComment($comment, $user, $reason);
 
         $this->addFlash('success', 'Commentaire signalé.');
-
-        return $this->redirectToRoute('post_show', ['id' => $comment->getPost()->getId()]);
+        return $this->redirectToRoute('post_show', ['postId' => $comment->getPost()->getId()]);
     }
 }
