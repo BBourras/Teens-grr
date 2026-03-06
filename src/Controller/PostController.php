@@ -19,7 +19,7 @@ class PostController extends AbstractController
         private Security $security
     ) {}
 
-    #[Route('/', name: 'post_list')]
+    #[Route('/', name: 'post_list', methods: ['GET'])]
     public function list(Request $request): Response
     {
         $page = max(1, (int) $request->query->get('page', 1));
@@ -32,17 +32,7 @@ class PostController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'post_show')]
-    public function show(Post $post): Response
-    {
-        $this->denyAccessUnlessGranted('POST_VIEW', $post);
-
-        return $this->render('post/show.html.twig', [
-            'post' => $post,
-        ]);
-    }
-
-    #[Route('/new', name: 'post_new')]
+    #[Route('/new', name: 'post_new', methods: ['GET','POST'])]
     public function new(Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -63,7 +53,17 @@ class PostController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/edit', name: 'post_edit')]
+    #[Route('/{id}', name: 'post_show', methods: ['GET'])]
+    public function show(Post $post): Response
+    {
+        $this->denyAccessUnlessGranted('POST_VIEW', $post);
+
+        return $this->render('post/show.html.twig', [
+            'post' => $post,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'post_edit', methods: ['GET','POST'])]
     public function edit(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('POST_EDIT', $post);

@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/comments')]
+#[Route('/posts/{id}/comments')]
 class CommentController extends AbstractController
 {
     public function __construct(
@@ -20,7 +20,7 @@ class CommentController extends AbstractController
         private Security $security
     ) {}
 
-    #[Route('/posts/{id}/create', name: 'comment_create', methods: ['POST'])]
+    #[Route('', name: 'comment_create', methods: ['POST'])]
     public function create(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');

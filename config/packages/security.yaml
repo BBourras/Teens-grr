@@ -20,7 +20,7 @@ security:
         main:
             lazy: true
             provider: app_user_provider
-            user_checker: App\Security\UserChecker  # <-- ici on injecte notre checker
+            user_checker: App\Security\UserChecker # <-- ici on injecte notre checker
 
             form_login:
                 login_path: app_login
@@ -35,22 +35,30 @@ security:
                 max_attempts: 5
 
     access_control:
+        # Public pages
         - { path: ^/login$, roles: PUBLIC_ACCESS }
         - { path: ^/register$, roles: PUBLIC_ACCESS }
         - { path: ^/$, roles: PUBLIC_ACCESS }
-        - { path: ^/posts$, roles: PUBLIC_ACCESS, methods: [GET] }
+
+        # Read posts
+        - { path: ^/posts/?$, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/posts/\d+$, roles: PUBLIC_ACCESS, methods: [GET] }
-        - { path: ^/posts/\d+/vote/, roles: PUBLIC_ACCESS }
+
+        # Voting (public)
+        - { path: ^/votes/posts/\d+/vote$, roles: PUBLIC_ACCESS, methods: [POST] }
 
         # Posts management
         - { path: ^/posts/new$, roles: ROLE_USER }
-        - { path: ^/posts$, roles: ROLE_USER, methods: [POST] }
         - { path: ^/posts/\d+/edit$, roles: ROLE_USER }
         - { path: ^/posts/\d+/delete$, roles: ROLE_USER, methods: [POST, DELETE] }
 
         # Comments management
-        - { path: ^/posts/\d+/comment$, roles: ROLE_USER, methods: [POST] }
-        - { path: ^/comments/\d+/delete$, roles: ROLE_USER, methods: [POST, DELETE] }
+        - { path: ^/posts/\d+/comments$, roles: ROLE_USER, methods: [POST] }
+        - { path: ^/posts/\d+/comments/\d+/delete$, roles: ROLE_USER, methods: [POST, DELETE] }
+
+        # Reports
+        - { path: ^/reports/posts/\d+/report$, roles: ROLE_USER, methods: [POST] }
+        - { path: ^/reports/comments/\d+/report$, roles: ROLE_USER, methods: [POST] }
 
         # Moderation
         - { path: ^/moderation, roles: ROLE_MODERATOR }

@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Post;
 use App\Entity\Comment;
-use App\Entity\User;
 use App\Service\ReportService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,7 +15,7 @@ class ReportController extends AbstractController
 {
     public function __construct(private ReportService $reportService) {}
 
-    #[Route('/post/{id}', name: 'report_post', methods: ['POST'])]
+    #[Route('/posts/{id}/report', name: 'report_post', methods: ['POST'])]
     public function reportPost(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -29,7 +28,7 @@ class ReportController extends AbstractController
         return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
     }
 
-    #[Route('/comment/{id}', name: 'report_comment', methods: ['POST'])]
+    #[Route('/comments/{id}/report', name: 'report_comment', methods: ['POST'])]
     public function reportComment(Comment $comment, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
