@@ -17,9 +17,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Id, ORM\GeneratedValue, ORM\Column]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
@@ -68,15 +66,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     public function getId(): ?int { return $this->id; }
-
     public function getEmail(): string { return $this->email; }
     public function setEmail(string $email): static { $this->email = strtolower($email); return $this; }
 
     public function getUsername(): string { return $this->username; }
-    public function setUsername(string $username): static 
-    { 
-        $this->username = $username; return $this; 
-        }
+    public function setUsername(string $username): static { $this->username = $username; return $this; }
 
     public function getUserIdentifier(): string { return $this->email; }
 
@@ -100,15 +94,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
 
-    /** @return Collection<int, Post> */
     public function getPosts(): Collection { return $this->posts; }
-
-    /** @return Collection<int, Comment> */
     public function getComments(): Collection { return $this->comments; }
-
-    /** @return Collection<int, Vote> */
     public function getVotes(): Collection { return $this->votes; }
-
-    /** @return Collection<int, Report> */
     public function getReports(): Collection { return $this->reports; }
 }

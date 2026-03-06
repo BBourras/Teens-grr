@@ -14,13 +14,11 @@ class CommentVoter extends Voter
     public const EDIT = 'COMMENT_EDIT';
     public const DELETE = 'COMMENT_DELETE';
 
-    public function __construct(
-        private Security $security
-    ) {}
+    public function __construct(private Security $security) {}
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::EDIT, self::DELETE])
+        return in_array($attribute, [self::EDIT, self::DELETE], true)
             && $subject instanceof Comment;
     }
 
@@ -28,12 +26,15 @@ class CommentVoter extends Voter
     {
         /** @var User|null $user */
         $user = $token->getUser();
-
         $comment = $subject;
 
-        // ADMIN / MODERATOR
-        if ($this->security->isGranted('ROLE_ADMIN') ||
-            $this->security->isGranted('ROLE_MODERATOR')) {
+        // Bloquer tout utilisateur suspendu
+        if ($user && in_array('ROLE_BANNED', $user->getRoles(), true)) {
+            return false;
+        }
+
+        // Admin / Modérateur peut tout faire
+        if ($this->security->isGranted('ROLE_ADMIN') || $this->security->isGranted('ROLE_MODERATOR')) {
             return true;
         }
 

@@ -15,13 +15,11 @@ class PostVoter extends Voter
     public const EDIT = 'POST_EDIT';
     public const DELETE = 'POST_DELETE';
 
-    public function __construct(
-        private Security $security
-    ) {}
+    public function __construct(private Security $security) {}
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE])
+        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE], true)
             && $subject instanceof Post;
     }
 
@@ -29,12 +27,15 @@ class PostVoter extends Voter
     {
         /** @var User|null $user */
         $user = $token->getUser();
-
         $post = $subject;
 
-        // ADMIN / MODERATOR peut tout faire
-        if ($this->security->isGranted('ROLE_ADMIN') ||
-            $this->security->isGranted('ROLE_MODERATOR')) {
+        // Bloquer tout utilisateur suspendu
+        if ($user && in_array('ROLE_BANNED', $user->getRoles(), true)) {
+            return false;
+        }
+
+        // Admin / Modérateur peut tout faire
+        if ($this->security->isGranted('ROLE_ADMIN') || $this->security->isGranted('ROLE_MODERATOR')) {
             return true;
         }
 
@@ -53,21 +54,15 @@ class PostVoter extends Voter
 
     private function canEdit(Post $post, ?User $user): bool
     {
-        if (!$user) {
-            return false;
-        }
-
-        return $post->getAuthor() === $user
+        return $user
+            && $post->getAuthor() === $user
             && $post->getStatus() !== PostStatus::DELETED;
     }
 
     private function canDelete(Post $post, ?User $user): bool
     {
-        if (!$user) {
-            return false;
-        }
-
-        return $post->getAuthor() === $user
+        return $user
+            && $post->getAuthor() === $user
             && $post->getStatus() !== PostStatus::DELETED;
     }
 }
