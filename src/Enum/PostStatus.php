@@ -18,7 +18,10 @@ enum PostStatus: string
 
     public function isHidden(): bool
     {
-        return \in_array($this, [self::AUTO_HIDDEN, self::HIDDEN_BY_MODERATOR], true);
+        return \in_array($this, [
+            self::AUTO_HIDDEN,
+            self::HIDDEN_BY_MODERATOR,
+        ], true);
     }
 
     public function isDeleted(): bool
@@ -27,8 +30,32 @@ enum PostStatus: string
     }
 
     /**
-     * Clé de traduction (recommandé) : post.status.published, etc.
+     * Contenu affecté par une modération (auto ou humaine).
      */
+    public function isModerated(): bool
+    {
+        return $this !== self::PUBLISHED;
+    }
+
+    /**
+     * Modération automatique (ex : seuil de signalements atteint).
+     */
+    public function isAutoModerated(): bool
+    {
+        return $this === self::AUTO_HIDDEN;
+    }
+
+    /**
+     * Modération humaine.
+     */
+    public function isManuallyModerated(): bool
+    {
+        return \in_array($this, [
+            self::HIDDEN_BY_MODERATOR,
+            self::DELETED,
+        ], true);
+    }
+
     public function labelKey(): string
     {
         return match ($this) {
@@ -39,21 +66,15 @@ enum PostStatus: string
         };
     }
 
-    /**
-     * Valeurs string de l'enum (utile pour validation / contraintes).
-     */
     public static function values(): array
     {
         return array_map(static fn (self $s) => $s->value, self::cases());
     }
 
-    /**
-     * Helper pour ChoiceType (Symfony Forms).
-     * Retourne: ['post.status.published' => 'published', ...]
-     */
     public static function choices(): array
     {
         $choices = [];
+
         foreach (self::cases() as $case) {
             $choices[$case->labelKey()] = $case->value;
         }

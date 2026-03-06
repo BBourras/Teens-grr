@@ -18,7 +18,10 @@ enum CommentStatus: string
 
     public function isHidden(): bool
     {
-        return \in_array($this, [self::AUTO_HIDDEN, self::HIDDEN_BY_MODERATOR], true);
+        return \in_array($this, [
+            self::AUTO_HIDDEN,
+            self::HIDDEN_BY_MODERATOR,
+        ], true);
     }
 
     public function isDeleted(): bool
@@ -27,8 +30,32 @@ enum CommentStatus: string
     }
 
     /**
-     * Clé de traduction (recommandé) : comment.status.published, etc.
+     * Contenu affecté par une modération.
      */
+    public function isModerated(): bool
+    {
+        return $this !== self::PUBLISHED;
+    }
+
+    /**
+     * Masquage automatique (signalements).
+     */
+    public function isAutoModerated(): bool
+    {
+        return $this === self::AUTO_HIDDEN;
+    }
+
+    /**
+     * Action humaine.
+     */
+    public function isManuallyModerated(): bool
+    {
+        return \in_array($this, [
+            self::HIDDEN_BY_MODERATOR,
+            self::DELETED,
+        ], true);
+    }
+
     public function labelKey(): string
     {
         return match ($this) {
@@ -47,6 +74,7 @@ enum CommentStatus: string
     public static function choices(): array
     {
         $choices = [];
+
         foreach (self::cases() as $case) {
             $choices[$case->labelKey()] = $case->value;
         }

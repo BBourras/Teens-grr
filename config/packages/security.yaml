@@ -1,6 +1,6 @@
 security:
     password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: "auto"
 
     role_hierarchy:
         ROLE_MODERATOR: ROLE_USER
@@ -40,17 +40,25 @@ security:
         - { path: ^/$, roles: PUBLIC_ACCESS }
         - { path: ^/posts$, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/posts/\d+$, roles: PUBLIC_ACCESS, methods: [GET] }
-        - { path: ^/posts/\d+/votes/, roles: PUBLIC_ACCESS }
+        - { path: ^/posts/\d+/vote/, roles: PUBLIC_ACCESS }
 
         # Posts management
         - { path: ^/posts/new$, roles: ROLE_USER }
         - { path: ^/posts$, roles: ROLE_USER, methods: [POST] }
         - { path: ^/posts/\d+/edit$, roles: ROLE_USER }
-        - { path: ^/posts/\d+/delete$, roles: ROLE_USER, methods: [POST, DELETE] }
+        - {
+              path: ^/posts/\d+/delete$,
+              roles: ROLE_USER,
+              methods: [POST, DELETE],
+          }
 
         # Comments management
-        - { path: ^/posts/\d+/comments$, roles: ROLE_USER, methods: [POST] }
-        - { path: ^/comments/\d+/delete$, roles: ROLE_USER, methods: [POST, DELETE] }
+        - { path: ^/posts/\d+/comment$, roles: ROLE_USER, methods: [POST] }
+        - {
+              path: ^/comments/\d+/delete$,
+              roles: ROLE_USER,
+              methods: [POST, DELETE],
+          }
 
         # Moderation
         - { path: ^/moderation, roles: ROLE_MODERATOR }

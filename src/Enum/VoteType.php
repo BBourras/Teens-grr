@@ -19,9 +19,6 @@ enum VoteType: string
         };
     }
 
-    /**
-     * Clé de traduction (recommandé) : vote.like, vote.laugh, vote.angry
-     */
     public function labelKey(): string
     {
         return match ($this) {
@@ -32,8 +29,7 @@ enum VoteType: string
     }
 
     /**
-     * Poids de la réaction pour calculer la popularité.
-     * Ajuste selon ton produit.
+     * Poids utilisé pour calculer le score de popularité.
      */
     public function weight(): int
     {
@@ -44,21 +40,28 @@ enum VoteType: string
         };
     }
 
+    /**
+     * Libellé prêt pour affichage UI.
+     */
+    public function displayLabel(): string
+    {
+        return $this->emoji() . ' ' . $this->labelKey();
+    }
+
     public static function values(): array
     {
         return array_map(static fn (self $t) => $t->value, self::cases());
     }
 
     /**
-     * Pour ChoiceType:
-     * Retourne: ['😂 vote.laugh' => 'laugh', ...]
-     * (Tu peux ensuite traduire les clés avec Symfony Translator.)
+     * Pour ChoiceType Symfony.
      */
     public static function choices(): array
     {
         $choices = [];
+
         foreach (self::cases() as $case) {
-            $choices[$case->emoji() . ' ' . $case->labelKey()] = $case->value;
+            $choices[$case->displayLabel()] = $case->value;
         }
 
         return $choices;
