@@ -3,8 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Post;
-use App\Entity\Vote;
 use App\Entity\User;
+use App\Entity\Vote;
 use App\Enum\VoteType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -16,7 +16,7 @@ class VoteRepository extends ServiceEntityRepository
         parent::__construct($registry, Vote::class);
     }
 
-    public function findUserVote(Post $post, ?User $user, ?string $ip): ?Vote
+    public function findUserVote(Post $post, ?User $user, ?string $guestKey): ?Vote
     {
         $qb = $this->createQueryBuilder('v')
             ->where('v.post = :post')
@@ -26,22 +26,22 @@ class VoteRepository extends ServiceEntityRepository
             $qb->andWhere('v.user = :user')
                ->setParameter('user', $user);
         } else {
-            $qb->andWhere('v.ipAddress = :ip')
-               ->setParameter('ip', $ip);
+            $qb->andWhere('v.guestKey = :guestKey')
+               ->setParameter('guestKey', $guestKey);
         }
 
         return $qb->getQuery()->getOneOrNullResult();
     }
 
-    public function countRecentVotesByIp(Post $post, string $ip, \DateTimeInterface $since): int
+    public function countRecentVotesByGuest(Post $post, string $guestKey, \DateTimeInterface $since): int
     {
         return (int) $this->createQueryBuilder('v')
             ->select('COUNT(v.id)')
             ->where('v.post = :post')
-            ->andWhere('v.ipAddress = :ip')
+            ->andWhere('v.guestKey = :guestKey')
             ->andWhere('v.createdAt >= :since')
             ->setParameter('post', $post)
-            ->setParameter('ip', $ip)
+            ->setParameter('guestKey', $guestKey)
             ->setParameter('since', $since)
             ->getQuery()
             ->getSingleScalarResult();
@@ -58,9 +58,8 @@ class VoteRepository extends ServiceEntityRepository
             ->getResult();
 
         $scores = [];
-
         foreach ($results as $row) {
-            $scores[$row['type']] = (int) $row['count'];
+            $scores[VoteType::from($row['type'])] = (int)$row['count'];
         }
 
         return $scores;

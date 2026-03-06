@@ -1,5 +1,4 @@
 <?php
-// src/Service/VoteService.php
 
 namespace App\Service;
 
@@ -13,15 +12,11 @@ class VoteService
 {
     public function __construct(private EntityManagerInterface $em) {}
 
-    /**
-     * Vérifie si un utilisateur connecté peut voter
-     */
     public function canVote(Post $post, ?User $user, ?string $guestIp = null): bool
     {
         if ($user) {
-            $existingVote = $this->em->getRepository(Vote::class)
-                ->findOneBy(['post' => $post, 'user' => $user]);
-            return $existingVote === null;
+            return $this->em->getRepository(Vote::class)
+                        ->findOneBy(['post' => $post, 'user' => $user]) === null;
         }
 
         if ($guestIp) {
@@ -43,27 +38,21 @@ class VoteService
         return false;
     }
 
-    /**
-     * Retourne le vote existant de l'utilisateur
-     */
     public function getUserVote(Post $post, User $user): ?Vote
     {
         return $this->em->getRepository(Vote::class)
             ->findOneBy(['post' => $post, 'user' => $user]);
     }
 
-    /**
-     * Crée ou met à jour un vote
-     */
     public function vote(Post $post, ?User $user, VoteType $type, ?string $guestIp = null): Vote
     {
-        $vote = null;
+        $vote = $user
+            ? $this->getUserVote($post, $user) ?? new Vote()
+            : new Vote();
 
         if ($user) {
-            $vote = $this->getUserVote($post, $user) ?? new Vote();
             $vote->setUser($user);
         } else {
-            $vote = new Vote();
             $vote->setGuestIpHash($guestIp);
         }
 
@@ -77,18 +66,12 @@ class VoteService
         return $vote;
     }
 
-    /**
-     * Supprime un vote
-     */
     public function removeVote(Vote $vote): void
     {
         $this->em->remove($vote);
         $this->em->flush();
     }
 
-    /**
-     * Retourne le score par type de vote
-     */
     public function getScore(Post $post): array
     {
         $votes = $post->getVotes();

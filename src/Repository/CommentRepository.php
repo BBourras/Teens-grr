@@ -15,12 +15,11 @@ class CommentRepository extends ServiceEntityRepository
         parent::__construct($registry, Comment::class);
     }
 
-    /**
-     * Retourne les commentaires visibles d’un post
-     */
     public function findVisibleByPost(Post $post): array
     {
         return $this->createQueryBuilder('c')
+            ->leftJoin('c.author', 'a')
+            ->addSelect('a')
             ->andWhere('c.post = :post')
             ->andWhere('c.status = :status')
             ->setParameter('post', $post)
@@ -30,9 +29,6 @@ class CommentRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Compte les commentaires visibles d’un post
-     */
     public function countVisibleByPost(Post $post): int
     {
         return (int) $this->createQueryBuilder('c')

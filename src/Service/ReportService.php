@@ -24,7 +24,6 @@ class ReportService
 
     public function reportPost(Post $post, User $user, ?string $reason = null): void
     {
-        // Vérifie si l'utilisateur a déjà signalé ce post
         if ($this->reportRepository->findOneBy(['post' => $post, 'user' => $user])) {
             return;
         }
@@ -34,21 +33,17 @@ class ReportService
             ->setUser($user)
             ->setReason($reason);
 
-        $post->incrementReportCount(); // méthode dans l'entité Post
-
+        $post->incrementReportCount();
         $this->em->persist($report);
 
-        // Masquage automatique si seuil dépassé
         if ($post->getReportCount() >= self::AUTO_HIDE_THRESHOLD
             && $post->getStatus() === PostStatus::PUBLISHED) {
 
             $previousStatus = $post->getStatus();
-
             $post->setStatus(PostStatus::AUTO_HIDDEN);
 
             $log = new ModerationActionLog();
-            $log
-                ->setActionType(ModerationActionType::AUTO_HIDE)
+            $log->setActionType(ModerationActionType::AUTO_HIDE)
                 ->setPreviousStatus($previousStatus->value)
                 ->setNewStatus(PostStatus::AUTO_HIDDEN->value)
                 ->setModerator($user)
@@ -71,20 +66,17 @@ class ReportService
             ->setUser($user)
             ->setReason($reason);
 
-        $comment->incrementReportCount(); // méthode dans l'entité Comment
-
+        $comment->incrementReportCount();
         $this->em->persist($report);
 
         if ($comment->getReportCount() >= self::AUTO_HIDE_THRESHOLD
             && $comment->getStatus() === CommentStatus::PUBLISHED) {
 
             $previousStatus = $comment->getStatus();
-
             $comment->setStatus(CommentStatus::AUTO_HIDDEN);
 
             $log = new ModerationActionLog();
-            $log
-                ->setActionType(ModerationActionType::AUTO_HIDE)
+            $log->setActionType(ModerationActionType::AUTO_HIDE)
                 ->setPreviousStatus($previousStatus->value)
                 ->setNewStatus(CommentStatus::AUTO_HIDDEN->value)
                 ->setModerator($user)

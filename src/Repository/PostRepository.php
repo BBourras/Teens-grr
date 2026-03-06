@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Post;
 use App\Enum\PostStatus;
+use App\Enum\VoteType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -14,12 +15,11 @@ class PostRepository extends ServiceEntityRepository
         parent::__construct($registry, Post::class);
     }
 
-    /**
-     * Derniers posts publiés
-     */
     public function findLatest(int $limit = 10): array
     {
         return $this->createQueryBuilder('p')
+            ->leftJoin('p.author', 'a')
+            ->addSelect('a')
             ->andWhere('p.status = :status')
             ->setParameter('status', PostStatus::PUBLISHED)
             ->orderBy('p.createdAt', 'DESC')
@@ -28,27 +28,25 @@ class PostRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Posts les plus populaires (score basé sur les votes)
-     */
     public function findTopScored(int $limit = 10): array
     {
         return $this->createQueryBuilder('p')
             ->leftJoin('p.votes', 'v')
-            ->andWhere('p.status = :status')
-            ->setParameter('status', PostStatus::PUBLISHED)
-
-            ->addSelect("
+            ->addSelect('
                 SUM(
                     CASE 
-                        WHEN v.type = 'like' THEN 1
-                        WHEN v.type = 'laugh' THEN 2
-                        WHEN v.type = 'angry' THEN -1
+                        WHEN v.type = :like THEN 1
+                        WHEN v.type = :laugh THEN 2
+                        WHEN v.type = :angry THEN -1
                         ELSE 0
                     END
                 ) AS HIDDEN score
-            ")
-
+            ')
+            ->andWhere('p.status = :status')
+            ->setParameter('status', PostStatus::PUBLISHED)
+            ->setParameter('like', VoteType::LIKE)
+            ->setParameter('laugh', VoteType::LAUGH)
+            ->setParameter('angry', VoteType::ANGRY)
             ->groupBy('p.id')
             ->orderBy('score', 'DESC')
             ->setMaxResults($limit)
@@ -56,9 +54,6 @@ class PostRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Pagination des posts publiés
-     */
     public function findPaginated(int $limit, int $offset): array
     {
         return $this->createQueryBuilder('p')
@@ -71,9 +66,6 @@ class PostRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Nombre total de posts publiés
-     */
     public function countPublished(): int
     {
         return (int) $this->createQueryBuilder('p')

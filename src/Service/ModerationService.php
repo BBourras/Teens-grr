@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Service;
 
 use App\Entity\Comment;
@@ -17,14 +15,10 @@ class ModerationService
 {
     public function __construct(private EntityManagerInterface $em) {}
 
-    /**
-     * Masquer un post ou commentaire manuellement par un modérateur
-     */
     public function hideByModerator(Post|Comment $entity, User $moderator, ?string $reason = null): void
     {
         $previousStatus = $this->getStatusString($entity);
 
-        // Définir le nouveau statut
         if ($entity instanceof Post) {
             $entity->setStatus(PostStatus::HIDDEN_BY_MODERATOR);
         } elseif ($entity instanceof Comment) {
@@ -35,9 +29,6 @@ class ModerationService
         $this->em->flush();
     }
 
-    /**
-     * Restaurer un post ou commentaire masqué
-     */
     public function restore(Post|Comment $entity, User $moderator, ?string $reason = null): void
     {
         $previousStatus = $this->getStatusString($entity);
@@ -52,9 +43,6 @@ class ModerationService
         $this->em->flush();
     }
 
-    /**
-     * Supprimer un post ou commentaire
-     */
     public function delete(Post|Comment $entity, User $moderator, ?string $reason = null): void
     {
         $previousStatus = $this->getStatusString($entity);
@@ -69,9 +57,6 @@ class ModerationService
         $this->em->flush();
     }
 
-    /**
-     * Crée un log de modération
-     */
     private function logAction(
         Post|Comment $entity,
         User $moderator,
@@ -97,13 +82,8 @@ class ModerationService
         $this->em->persist($log);
     }
 
-    /**
-     * Retourne le statut sous forme de string (PostStatus ou CommentStatus)
-     */
     private function getStatusString(Post|Comment $entity): string
     {
-        return $entity instanceof Post
-            ? $entity->getStatus()->value
-            : $entity->getStatus()->value;
+        return $entity->getStatus()->value;
     }
 }
