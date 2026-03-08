@@ -1,10 +1,21 @@
 {# templates/partials/moderation/_moderation_menu.html.twig #}
 {# Menu latéral pour dashboard modération #}
 
-<nav>
-    <ul>
-        <li><a href="{{ path('moderation_dashboard') }}">Dashboard</a></li>
-        <li><a href="{{ path('moderation_dashboard') }}#posts">Posts signalés</a></li>
-        <li><a href="{{ path('moderation_dashboard') }}#comments">Commentaires signalés</a></li>
-    </ul>
-</nav>
+<div class="list-group mb-4">
+    <span class="list-group-item list-group-item-secondary fw-bold">Modération</span>
+
+    <a href="{{ path('moderation_dashboard') }}" class="list-group-item list-group-item-action">
+        Dashboard
+        {% if posts|length > 0 or comments|length > 0 %}
+            <span class="badge bg-danger float-end">{{ posts|length + comments|length }}</span>
+        {% endif %}
+    </a>
+
+    <a href="{{ path('moderation_posts_hidden') }}" class="list-group-item list-group-item-action">
+        Posts masqués
+    </a>
+
+    <a href="{{ path('moderation_comments_hidden') }}" class="list-group-item list-group-item-action">
+        Commentaires masqués
+    </a>
+</div>

@@ -1,21 +1,62 @@
 {# templates/partials/_navbar.html.twig #}
 {# Barre de navigation principale, incluse dans base.html.twig #}
 
-<nav>
-    <ul>
-        <li><a href="{{ path('home') }}">Accueil</a></li>
-        <li><a href="{{ path('post_list') }}">Posts</a></li>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        {# Logo / Nom du site #}
+        <a class="navbar-brand" href="{{ path('home') }}">Teens Grr</a>
 
-        {% if app.user %}
-            <li><a href="{{ path('post_new') }}">Nouveau post</a></li>
-            <li><a href="{{ path('app_logout') }}">Déconnexion</a></li>
-        {% else %}
-            <li><a href="{{ path('app_login') }}">Connexion</a></li>
-            <li><a href="{{ path('app_register') }}">Inscription</a></li>
-        {% endif %}
+        {# Bouton responsive pour mobile #}
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-        {% if is_granted('ROLE_MODERATOR') %}
-            <li><a href="{{ path('moderation_dashboard') }}">Modération</a></li>
-        {% endif %}
-    </ul>
+        {# Liens de navigation principaux #}
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('post_list') }}">Posts</a>
+                </li>
+            </ul>
+
+            {# Liens à droite : connexion / utilisateur #}
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                {% if app.user %}
+                    {# Si connecté, afficher le pseudo et un menu déroulant #}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+                           aria-expanded="false">
+                            {{ app.user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ path('post_new') }}">Créer un post</a>
+                            </li>
+
+                            {% if is_granted('ROLE_MODERATOR') %}
+                                {# Lien vers le menu modération si l'utilisateur est modérateur #}
+                                <li>
+                                    <a class="dropdown-item" href="{{ path('moderation_dashboard') }}">Modération</a>
+                                </li>
+                            {% endif %}
+
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ path('app_logout') }}">Déconnexion</a>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    {# Si pas connecté, afficher login / register #}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_login') }}">Connexion</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_register') }}">Inscription</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
 </nav>
