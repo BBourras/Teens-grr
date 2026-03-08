@@ -14,39 +14,52 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/reports')]
 class ReportController extends AbstractController
 {
-    public function __construct(private ReportService $reportService) {}
+    public function __construct(
+        private ReportService $reportService
+    ) {}
 
     /**
-     * Signaler un post
+     * Signaler un post.
+     * - Un utilisateur ne peut signaler qu’une fois (géré côté service)
      */
     #[Route('/posts/{postId}/report', name: 'report_post', methods: ['POST'])]
     public function reportPost(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
+
         /** @var User $user */
         $user = $this->getUser();
+
         $reason = $request->request->get('reason');
 
         $this->reportService->reportPost($post, $user, $reason);
 
         $this->addFlash('success', 'Post signalé.');
-        return $this->redirectToRoute('post_show', ['postId' => $post->getId()]);
+
+        return $this->redirectToRoute('post_show', [
+            'postId' => $post->getId()
+        ]);
     }
 
     /**
-     * Signaler un commentaire
+     * Signaler un commentaire.
      */
     #[Route('/comments/{commentId}/report', name: 'report_comment', methods: ['POST'])]
     public function reportComment(Comment $comment, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
+
         /** @var User $user */
         $user = $this->getUser();
+
         $reason = $request->request->get('reason');
 
         $this->reportService->reportComment($comment, $user, $reason);
 
         $this->addFlash('success', 'Commentaire signalé.');
-        return $this->redirectToRoute('post_show', ['postId' => $comment->getPost()->getId()]);
+
+        return $this->redirectToRoute('post_show', [
+            'postId' => $comment->getPost()->getId()
+        ]);
     }
 }

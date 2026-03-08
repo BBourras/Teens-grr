@@ -1,0 +1,28 @@
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>
+            <a href="{{ path('post_show', { postId: post.id }) }}">
+                {{ post.title }}
+            </a>
+        </h5>
+
+        <p class="text-muted">
+            Par {{ post.author.username }} • {{ post.createdAt|date('d/m/Y H:i') }}
+        </p>
+
+        <p>
+            {{ post.content|slice(0, 200) }}...
+        </p>
+
+        <div class="d-flex justify-content-between">
+            <span>
+                💬 {{ post.commentCount }}
+                ⚡ {{ post.reactionScore }}
+            </span>
+
+            {% if is_granted('POST_EDIT', post) %}
+                <a href="{{ path('post_edit', { postId: post.id }) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+            {% endif %}
+        </div>
+    </div>
+</div>

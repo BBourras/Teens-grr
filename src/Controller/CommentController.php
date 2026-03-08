@@ -21,7 +21,9 @@ class CommentController extends AbstractController
     ) {}
 
     /**
-     * Création d'un commentaire sur un post
+     * Création d’un commentaire sur un post.
+     * - Accessible uniquement aux utilisateurs connectés
+     * - Validation via CommentFormType
      */
     #[Route('', name: 'comment_create', methods: ['POST'])]
     public function create(Post $post, Request $request): Response
@@ -33,29 +35,41 @@ class CommentController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->commentService->create($comment, $post, $this->security->getUser());
+
+            $this->commentService->create(
+                $comment,
+                $post,
+                $this->security->getUser()
+            );
+
             $this->addFlash('success', 'Commentaire ajouté avec succès.');
         }
 
-        return $this->redirectToRoute('post_show', ['postId' => $post->getId()]);
+        return $this->redirectToRoute('post_show', [
+            'postId' => $post->getId()
+        ]);
     }
 
     /**
-     * Suppression d'un commentaire
+     * Suppression logique d’un commentaire.
+     * Permission gérée par Voter (COMMENT_DELETE).
      */
     #[Route('/{commentId}/delete', name: 'comment_delete', methods: ['POST', 'DELETE'])]
     public function delete(Post $post, Comment $comment): Response
     {
         $this->denyAccessUnlessGranted('COMMENT_DELETE', $comment);
 
-        // Vérifie que le commentaire appartient bien au post
+        // Sécurité supplémentaire : vérifie l'appartenance au post
         if ($comment->getPost() !== $post) {
             throw $this->createNotFoundException('Commentaire non trouvé pour ce post.');
         }
 
         $this->commentService->delete($comment);
+
         $this->addFlash('success', 'Commentaire supprimé avec succès.');
 
-        return $this->redirectToRoute('post_show', ['postId' => $post->getId()]);
+        return $this->redirectToRoute('post_show', [
+            'postId' => $post->getId()
+        ]);
     }
 }

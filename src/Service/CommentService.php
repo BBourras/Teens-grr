@@ -16,44 +16,88 @@ class CommentService
         private CommentRepository $commentRepository,
     ) {}
 
+    /**
+     * Création d’un commentaire.
+     * - Assigne le post
+     * - Assigne l’auteur
+     * - Définit le statut
+     * - Incrémente le compteur du post
+     */
     public function create(Comment $comment, Post $post, User $author): void
     {
         $comment->setPost($post)
                 ->setAuthor($author)
                 ->setStatus(CommentStatus::PUBLISHED);
 
+        // Compteur dénormalisé
+        $post->incrementCommentCount();
+
         $this->em->persist($comment);
         $this->em->flush();
     }
 
+    /**
+     * Suppression logique d’un commentaire.
+     * On le marque comme supprimé.
+     */
     public function delete(Comment $comment): void
     {
         $comment->setStatus(CommentStatus::DELETED)
                 ->setDeletedAt(new \DateTimeImmutable());
 
+        // On décrémente le compteur du post
+        $comment->getPost()->decrementCommentCount();
+
         $this->em->flush();
     }
 
+    /**
+     * Masquage automatique (suite à signalements).
+     */
     public function autoHide(Comment $comment): void
     {
         $comment->setStatus(CommentStatus::AUTO_HIDDEN);
         $this->em->flush();
     }
 
+    /**
+     * Masquage manuel par un modérateur.
+     */
     public function hideByModerator(Comment $comment): void
     {
         $comment->setStatus(CommentStatus::HIDDEN_BY_MODERATOR);
         $this->em->flush();
     }
 
+    /**
+     * Restauration d’un commentaire.
+     */
     public function restore(Comment $comment): void
     {
         $comment->setStatus(CommentStatus::PUBLISHED);
         $this->em->flush();
     }
 
-    public function getVisibleByPost(Post $post): array
+    /**
+     * Récupère les commentaires visibles selon le rôle.
+     * - Modérateur : voit tout
+     * - Utilisateur normal : seulement PUBLISHED
+     */
+    public function getVisibleByPost(Post $post, ?User $user): array
     {
-        return $this->commentRepository->findVisibleByPost($post);
+        if ($user && in_array('ROLE_MODERATOR', $user->getRoles())) {
+            return $this->commentRepository->findBy(
+                ['post' => $post],
+                ['createdAt' => 'DESC']
+            );
+        }
+
+        return $this->commentRepository->findBy(
+            [
+                'post' => $post,
+                'status' => CommentStatus::PUBLISHED
+            ],
+            ['createdAt' => 'DESC']
+        );
     }
 }

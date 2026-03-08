@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Posts{% endblock %}
+
+{% block body %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>📰 Tous les posts</h1>
+
+    {% if is_granted('ROLE_USER') %}
+        <a href="{{ path('post_new') }}" class="btn btn-primary">
+            + Nouveau post
+        </a>
+    {% endif %}
+</div>
+
+{% for post in posts %}
+    {% include 'partials/_post_card.html.twig' with { post: post } %}
+{% else %}
+    <div class="alert alert-info">
+        Aucun post pour le moment.
+    </div>
+{% endfor %}
+
+{% endblock %}

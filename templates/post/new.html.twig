@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un post{% endblock %}
+
+{% block body %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+
+        <h2 class="mb-4">📝 Créer un nouveau post</h2>
+
+        {% include 'partials/_post_form.html.twig' with {
+            form: form,
+            button_label: 'Publier',
+            button_color: 'primary',
+            cancel_path: path('post_list')
+        } %}
+
+    </div>
+</div>
+
+{% endblock %}

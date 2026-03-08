@@ -1,0 +1,25 @@
+<div class="card mb-3">
+    <div class="card-body">
+
+        {{ form_start(form) }}
+
+            <div class="mb-3">
+                {{ form_widget(form.content, {
+                    attr: {
+                        class: 'form-control',
+                        placeholder: 'Écrire un commentaire...'
+                    }
+                }) }}
+                {{ form_errors(form.content) }}
+            </div>
+
+            <div class="text-end">
+                <button class="btn btn-sm btn-primary">
+                    {{ button_label|default('Commenter') }}
+                </button>
+            </div>
+
+        {{ form_end(form) }}
+
+    </div>
+</div>

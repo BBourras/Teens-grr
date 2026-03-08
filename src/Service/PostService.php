@@ -7,7 +7,6 @@ use App\Entity\User;
 use App\Enum\PostStatus;
 use App\Repository\PostRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\QueryBuilder;
 
 class PostService
 {
@@ -16,95 +15,71 @@ class PostService
         private PostRepository $postRepository,
     ) {}
 
+    /**
+     * Création d’un post.
+     * - Assigne l’auteur
+     * - Définit le statut initial
+     * - Persiste en base
+     */
     public function create(Post $post, User $author): void
     {
-        $post->setAuthor($author)
-             ->setStatus(PostStatus::PUBLISHED);
+        $post->setAuthor($author);
+        $post->setStatus(PostStatus::PUBLISHED);
 
         $this->em->persist($post);
         $this->em->flush();
     }
 
+    /**
+     * Mise à jour d’un post.
+     * Doctrine détecte automatiquement les modifications.
+     */
     public function update(Post $post): void
     {
         $this->em->flush();
     }
 
+    /**
+     * Suppression logique (soft delete).
+     * On ne supprime pas physiquement en base.
+     */
     public function delete(Post $post): void
     {
-        $post->setStatus(PostStatus::DELETED)
-             ->setDeletedAt(new \DateTimeImmutable());
+        $post->setStatus(PostStatus::DELETED);
+        $post->setDeletedAt(new \DateTimeImmutable());
 
         $this->em->flush();
     }
 
-    public function getLatestQueryBuilder(): QueryBuilder
-    {
-        return $this->postRepository->createQueryBuilder('p')
-            ->andWhere('p.status = :status')
-            ->setParameter('status', PostStatus::PUBLISHED)
-            ->orderBy('p.createdAt', 'DESC');
-    }
-
-    public function getTopScoredQueryBuilder(): QueryBuilder
-    {
-        return $this->postRepository->createQueryBuilder('p')
-            ->leftJoin('p.votes', 'v')
-            ->andWhere('p.status = :status')
-            ->setParameter('status', PostStatus::PUBLISHED)
-            ->addSelect("
-                SUM(
-                    CASE 
-                        WHEN v.type = 'like' THEN 1
-                        WHEN v.type = 'laugh' THEN 2
-                        WHEN v.type = 'angry' THEN -1
-                        ELSE 0
-                    END
-                ) AS HIDDEN score
-            ")
-            ->groupBy('p.id')
-            ->orderBy('score', 'DESC');
-    }
-
-    public function getPaginated(QueryBuilder $qb, int $page = 1, int $limit = 10): array
-    {
-        $offset = ($page - 1) * $limit;
-
-        $query = $qb
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery();
-
-        $items = $query->getResult();
-
-        $countQb = clone $qb;
-        $countQb->resetDQLPart('select')
-                ->resetDQLPart('orderBy')
-                ->select('COUNT(DISTINCT p.id)');
-
-        $total = (int) $countQb->getQuery()->getSingleScalarResult();
-
-        return [
-            'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'pages' => (int) ceil($total / $limit),
-        ];
-    }
-
+    /**
+     * Récupère les derniers posts publiés.
+     * Utilisé pour la page d’accueil ou la liste.
+     */
     public function getLatest(int $limit = 10): array
     {
-        return $this->getLatestQueryBuilder()
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+        return $this->postRepository->findBy(
+            ['status' => PostStatus::PUBLISHED],
+            ['createdAt' => 'DESC'],
+            $limit
+        );
     }
 
-    public function getTopScored(int $limit = 10): array
+    /**
+     * Vérifie si un post est visible pour un utilisateur donné.
+     * - Visible si PUBLISHED
+     * - Visible si modérateur
+     * - Sinon non visible
+     */
+    public function isVisible(Post $post, ?User $user): bool
     {
-        return $this->getTopScoredQueryBuilder()
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+        if ($post->getStatus() === PostStatus::PUBLISHED) {
+            return true;
+        }
+
+        if ($user && in_array('ROLE_MODERATOR', $user->getRoles())) {
+            return true;
+        }
+
+        return false;
     }
 }
