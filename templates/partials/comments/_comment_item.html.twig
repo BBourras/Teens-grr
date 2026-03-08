@@ -1,0 +1,14 @@
+{# templates/partials/comments/_comment_item.html.twig #}
+{# Affichage d’un commentaire #}
+
+<div>
+    <p>{{ comment.content }}</p>
+    <small>Par {{ comment.author.username }} le {{ comment.createdAt|date('d/m/Y H:i') }}</small>
+
+    {# Si utilisateur connecté peut supprimer #}
+    {% if is_granted('COMMENT_DELETE', comment) %}
+        <form action="{{ path('comment_delete', {'postId': comment.post.id, 'commentId': comment.id}) }}" method="post">
+            <button type="submit">Supprimer</button>
+        </form>
+    {% endif %}
+</div>

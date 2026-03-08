@@ -1,0 +1,21 @@
+{# templates/partials/_navbar.html.twig #}
+{# Barre de navigation principale, incluse dans base.html.twig #}
+
+<nav>
+    <ul>
+        <li><a href="{{ path('home') }}">Accueil</a></li>
+        <li><a href="{{ path('post_list') }}">Posts</a></li>
+
+        {% if app.user %}
+            <li><a href="{{ path('post_new') }}">Nouveau post</a></li>
+            <li><a href="{{ path('app_logout') }}">Déconnexion</a></li>
+        {% else %}
+            <li><a href="{{ path('app_login') }}">Connexion</a></li>
+            <li><a href="{{ path('app_register') }}">Inscription</a></li>
+        {% endif %}
+
+        {% if is_granted('ROLE_MODERATOR') %}
+            <li><a href="{{ path('moderation_dashboard') }}">Modération</a></li>
+        {% endif %}
+    </ul>
+</nav>

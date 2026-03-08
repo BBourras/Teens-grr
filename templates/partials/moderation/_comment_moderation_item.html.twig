@@ -1,0 +1,11 @@
+{# templates/partials/moderation/_comment_moderation_item.html.twig #}
+
+<div>
+    <p>{{ comment.content }}</p>
+    <small>Par {{ comment.author.username }} le {{ comment.createdAt|date('d/m/Y H:i') }}</small>
+
+    {# Restaurer le commentaire #}
+    <form action="{{ path('moderation_comment_restore', {'id': comment.id}) }}" method="post">
+        <button type="submit">Restaurer</button>
+    </form>
+</div>

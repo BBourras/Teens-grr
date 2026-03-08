@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Éléments signalés{% endblock %}
+
+{% block body %}
+<h1>Éléments signalés</h1>
+
+<h2>Posts signalés</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Auteur</th>
+            <th>Signalements</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for post in posts %}
+            {% include 'partials/moderation/_post_reported.html.twig' with { post: post } %}
+        {% else %}
+            <tr>
+                <td colspan="4">Aucun post signalé.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Commentaires signalés</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Commentaire</th>
+            <th>Auteur</th>
+            <th>Signalements</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for comment in comments %}
+            {% include 'partials/moderation/_comment_reported.html.twig' with { comment: comment } %}
+        {% else %}
+            <tr>
+                <td colspan="4">Aucun commentaire signalé.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -26,10 +26,10 @@ class CommentService
     public function create(Comment $comment, Post $post, User $author): void
     {
         $comment->setPost($post)
-                ->setAuthor($author)
-                ->setStatus(CommentStatus::PUBLISHED);
+            ->setAuthor($author)
+            ->setStatus(CommentStatus::PUBLISHED);
 
-        // Compteur dénormalisé
+        // Compteur dénormalisé pour le post
         $post->incrementCommentCount();
 
         $this->em->persist($comment);
@@ -37,13 +37,12 @@ class CommentService
     }
 
     /**
-     * Suppression logique d’un commentaire.
-     * On le marque comme supprimé.
+     * Suppression logique d’un commentaire. On le marque comme supprimé.
      */
     public function delete(Comment $comment): void
     {
         $comment->setStatus(CommentStatus::DELETED)
-                ->setDeletedAt(new \DateTimeImmutable());
+            ->setDeletedAt(new \DateTimeImmutable());
 
         // On décrémente le compteur du post
         $comment->getPost()->decrementCommentCount();
@@ -52,7 +51,16 @@ class CommentService
     }
 
     /**
-     * Masquage automatique (suite à signalements).
+     * Suppression définitive d’un commentaire.
+     */
+    public function hardDelete(Comment $comment): void
+    {
+        $this->em->remove($comment);
+        $this->em->flush();
+    }
+
+    /**
+     * Masquage automatique suite à signalements.
      */
     public function autoHide(Comment $comment): void
     {
@@ -93,10 +101,18 @@ class CommentService
         }
 
         return $this->commentRepository->findBy(
-            [
-                'post' => $post,
-                'status' => CommentStatus::PUBLISHED
-            ],
+            ['post' => $post, 'status' => CommentStatus::PUBLISHED],
+            ['createdAt' => 'DESC']
+        );
+    }
+
+    /**
+     * Récupère les commentaires auto-masqués.
+     */
+    public function getAutoHidden(): array
+    {
+        return $this->commentRepository->findBy(
+            ['status' => CommentStatus::AUTO_HIDDEN],
             ['createdAt' => 'DESC']
         );
     }

@@ -22,17 +22,26 @@ use Doctrine\ORM\Mapping as ORM;
 )]
 class Post
 {
+    // =======================
+    // IDENTIFIANT
+    // =======================
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    // =======================
+    // TITRE ET CONTENU
+    // =======================
     #[ORM\Column(length: 255)]
     private string $title;
 
     #[ORM\Column(type: Types::TEXT)]
     private string $content;
 
+    // =======================
+    // DATES
+    // =======================
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -42,12 +51,15 @@ class Post
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $deletedAt = null;
 
+    // =======================
+    // STATUT
+    // =======================
     #[ORM\Column(enumType: PostStatus::class)]
     private PostStatus $status = PostStatus::PUBLISHED;
 
-    /**
-     * Compteurs dénormalisés (très utiles pour Home: récents + populaires)
-     */
+    // =======================
+    // COMPTEURS DENORMALISES
+    // =======================
     #[ORM\Column(options: ['default' => 0])]
     private int $commentCount = 0;
 
@@ -57,6 +69,9 @@ class Post
     #[ORM\Column(options: ['default' => 0])]
     private int $reactionScore = 0;
 
+    // =======================
+    // RELATIONS
+    // =======================
     #[ORM\ManyToOne(inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
     private User $author;
@@ -86,6 +101,9 @@ class Post
         $this->moderationLogs = new ArrayCollection();
     }
 
+    // =======================
+    // LIFECYCLE CALLBACKS
+    // =======================
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
@@ -99,8 +117,10 @@ class Post
         $this->updatedAt = new \DateTimeImmutable();
     }
 
+    // =======================
+    // GETTERS / SETTERS
+    // =======================
     public function getId(): ?int { return $this->id; }
-
     public function getTitle(): string { return $this->title; }
     public function setTitle(string $title): static { $this->title = $title; return $this; }
 
@@ -109,7 +129,6 @@ class Post
 
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
-
     public function getDeletedAt(): ?\DateTimeImmutable { return $this->deletedAt; }
     public function setDeletedAt(?\DateTimeImmutable $deletedAt): static { $this->deletedAt = $deletedAt; return $this; }
 
@@ -120,22 +139,20 @@ class Post
     public function setAuthor(User $author): static { $this->author = $author; return $this; }
 
     public function getCommentCount(): int { return $this->commentCount; }
-    public function setCommentCount(int $commentCount): static { $this->commentCount = $commentCount; return $this; }
+    public function setCommentCount(int $count): static { $this->commentCount = $count; return $this; }
     public function incrementCommentCount(int $by = 1): static { $this->commentCount += $by; return $this; }
     public function decrementCommentCount(int $by = 1): static { $this->commentCount = max(0, $this->commentCount - $by); return $this; }
 
     public function getReportCount(): int { return $this->reportCount; }
-    public function setReportCount(int $reportCount): static { $this->reportCount = $reportCount; return $this; }
+    public function setReportCount(int $count): static { $this->reportCount = $count; return $this; }
     public function incrementReportCount(int $by = 1): static { $this->reportCount += $by; return $this; }
 
     public function getReactionScore(): int { return $this->reactionScore; }
-    public function setReactionScore(int $reactionScore): static { $this->reactionScore = $reactionScore; return $this; }
-    public function incrementReactionScore(int $by): static { $this->reactionScore += $by; return $this; }
+    public function setReactionScore(int $score): static { $this->reactionScore = $score; return $this; }
+    public function incrementReactionScore(int $by = 1): static { $this->reactionScore += $by; return $this; }
 
     /** @return Collection<int, Comment> */
     public function getComments(): Collection { return $this->comments; }
-
-    /** Important: owning side = Comment::post */
     public function addComment(Comment $comment): static
     {
         if (!$this->comments->contains($comment)) {
@@ -147,7 +164,6 @@ class Post
 
     /** @return Collection<int, Vote> */
     public function getVotes(): Collection { return $this->votes; }
-
     public function addVote(Vote $vote): static
     {
         if (!$this->votes->contains($vote)) {

@@ -1,3 +1,6 @@
+{# templates/partials/posts/_post_card.html.twig #}
+{# Affiche un post sous forme de card bootstrap #}
+
 <div class="card mb-3">
     <div class="card-body">
         <h5>
@@ -11,7 +14,7 @@
         </p>
 
         <p>
-            {{ post.content|slice(0, 200) }}...
+            {{ post.content|slice(0, 200) }}{% if post.content|length > 200 %}...{% endif %}
         </p>
 
         <div class="d-flex justify-content-between">

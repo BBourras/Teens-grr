@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de modération{% endblock %}
+
+{% block body %}
+<h1>Tableau de modération</h1>
+
+<h2>Posts automatiquement masqués</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Auteur</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for post in posts %}
+            {# Inclusion du partial pour un post #}
+            {% include 'partials/moderation/_post.html.twig' with { post: post } %}
+        {% else %}
+            <tr>
+                <td colspan="4">Aucun post masqué automatiquement.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Commentaires automatiquement masqués</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Commentaire</th>
+            <th>Auteur</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for comment in comments %}
+            {# Inclusion du partial pour un commentaire #}
+            {% include 'partials/moderation/_comment.html.twig' with { comment: comment } %}
+        {% else %}
+            <tr>
+                <td colspan="4">Aucun commentaire masqué automatiquement.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -81,63 +81,34 @@ class Comment
         $this->updatedAt = new \DateTimeImmutable();
     }
 
-    // =======================
-    // ID
-    // =======================
     public function getId(): ?int { return $this->id; }
-
-    // =======================
-    // Content
-    // =======================
     public function getContent(): string { return $this->content; }
     public function setContent(string $content): static { $this->content = $content; return $this; }
 
-    // =======================
-    // Dates
-    // =======================
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function setCreatedAt(\DateTimeImmutable $createdAt): static { $this->createdAt = $createdAt; return $this; }
 
     public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
-
     public function getDeletedAt(): ?\DateTimeImmutable { return $this->deletedAt; }
     public function setDeletedAt(?\DateTimeImmutable $deletedAt): static { $this->deletedAt = $deletedAt; return $this; }
 
-    // =======================
-    // Status
-    // =======================
     public function getStatus(): CommentStatus { return $this->status; }
     public function setStatus(CommentStatus $status): static { $this->status = $status; return $this; }
 
-    // =======================
-    // Report count
-    // =======================
     public function getReportCount(): int { return $this->reportCount; }
     public function incrementReportCount(int $by = 1): static { $this->reportCount += $by; return $this; }
     public function decrementReportCount(int $by = 1): static { $this->reportCount = max(0, $this->reportCount - $by); return $this; }
     public function setReportCount(int $reportCount): static { $this->reportCount = $reportCount; return $this; }
 
-    // =======================
-    // Author
-    // =======================
     public function getAuthor(): User { return $this->author; }
     public function setAuthor(User $author): static { $this->author = $author; return $this; }
 
-    // =======================
-    // Post
-    // =======================
     public function getPost(): Post { return $this->post; }
     public function setPost(Post $post): static { $this->post = $post; return $this; }
 
-    // =======================
-    // Reports
-    // =======================
     /** @return Collection<int, Report> */
     public function getReports(): Collection { return $this->reports; }
 
-    // =======================
-    // Moderation logs
-    // =======================
     /** @return Collection<int, ModerationActionLog> */
     public function getModerationLogs(): Collection { return $this->moderationLogs; }
 }

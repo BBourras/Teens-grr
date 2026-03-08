@@ -1,3 +1,5 @@
+{# Pour afficher tous les messages flash #}
+
 {% for label, messages in app.flashes %}
     {% for message in messages %}
         <div class="alert alert-{{ label }} alert-dismissible fade show">
