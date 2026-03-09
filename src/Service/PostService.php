@@ -72,6 +72,18 @@ class PostService
     }
 
     /**
+     * Récupère les posts avec le meilleur score de réaction.
+     */
+    public function getTopScored(int $limit = 5): array
+    {
+        return $this->postRepository->findBy(
+            ['status' => PostStatus::PUBLISHED],
+            ['reactionScore' => 'DESC'],
+            $limit
+        );
+    }
+
+    /**
      * Vérifie si un post est visible pour un utilisateur donné.
      * - Visible si PUBLISHED, Visible si modérateur, Sinon non visible
      */

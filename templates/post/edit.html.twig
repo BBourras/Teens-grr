@@ -9,17 +9,17 @@
 
         <h2 class="mb-4">✏️ Modifier le post</h2>
 
-        {% include 'partials/_post_form.html.twig' with {
+        {% include 'partials/posts/_post_form.html.twig' with {
             form: form,
             button_label: 'Mettre à jour',
             button_color: 'success',
-            cancel_path: path('post_show', { postId: post.id })
+            cancel_path: path('post_show', { id: post.id })
         } %}
 
         {% if is_granted('POST_DELETE', post) %}
             <div class="mt-3 text-end">
                 <form method="post"
-                      action="{{ path('post_delete', { postId: post.id }) }}"
+                      action="{{ path('post_delete', { id: post.id }) }}"
                       onsubmit="return confirm('Confirmer la suppression ?');">
 
                     <button class="btn btn-sm btn-outline-danger">

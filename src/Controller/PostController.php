@@ -60,7 +60,7 @@ class PostController extends AbstractController
             $this->addFlash('success', 'Post créé avec succès.');
 
             return $this->redirectToRoute('post_show', [
-                'postId' => $post->getId()
+                'id' => $post->getId()
             ]);
         }
 
@@ -75,7 +75,7 @@ class PostController extends AbstractController
      * - Charge les commentaires visibles
      * - Prépare le formulaire de commentaire si connecté
      */
-    #[Route('/{postId}', name: 'post_show', methods: ['GET'])]
+    #[Route('/{id}', name: 'post_show', methods: ['GET'])]
     public function show(Post $post): Response
     {
         $user = $this->getUser();
@@ -108,7 +108,7 @@ class PostController extends AbstractController
      * Édition d’un post.
      * La permission est gérée par un Voter (POST_EDIT).
      */
-    #[Route('/{postId}/edit', name: 'post_edit', methods: ['GET', 'POST'])]
+    #[Route('/{id}/edit', name: 'post_edit', methods: ['GET', 'POST'])]
     public function edit(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('POST_EDIT', $post);
@@ -123,7 +123,7 @@ class PostController extends AbstractController
             $this->addFlash('success', 'Post mis à jour avec succès.');
 
             return $this->redirectToRoute('post_show', [
-                'postId' => $post->getId()
+                'id' => $post->getId()
             ]);
         }
 
@@ -137,7 +137,7 @@ class PostController extends AbstractController
      * Suppression logique d’un post.
      * Permission gérée par Voter (POST_DELETE).
      */
-    #[Route('/{postId}/delete', name: 'post_delete', methods: ['POST', 'DELETE'])]
+    #[Route('/{id}/delete', name: 'post_delete', methods: ['POST', 'DELETE'])]
     public function delete(Post $post): Response
     {
         $this->denyAccessUnlessGranted('POST_DELETE', $post);

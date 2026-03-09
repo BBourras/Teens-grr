@@ -1,14 +1,23 @@
 {# templates/partials/comments/_comment_item.html.twig #}
 {# Affichage d’un commentaire #}
 
-<div>
-    <p>{{ comment.content }}</p>
-    <small>Par {{ comment.author.username }} le {{ comment.createdAt|date('d/m/Y H:i') }}</small>
+<div class="comment-item mb-2 p-2 border rounded">
+    {# Contenu du commentaire, avec retour à la ligne conservé #}
+    <p>{{ comment.content|nl2br }}</p>
 
-    {# Si utilisateur connecté peut supprimer #}
+    {# Auteur et date de création #}
+    <small class="text-muted">
+        Par {{ comment.author.username }} le {{ comment.createdAt|date('d/m/Y H:i') }}
+    </small>
+
+    {# Bouton supprimer si l’utilisateur a les droits #}
     {% if is_granted('COMMENT_DELETE', comment) %}
-        <form action="{{ path('comment_delete', {'postId': comment.post.id, 'commentId': comment.id}) }}" method="post">
-            <button type="submit">Supprimer</button>
+        {# La route delete prend deux paramètres distincts : id = post, commentId = commentaire #}
+        <form action="{{ path('comment_delete', {
+            'id': comment.post.id,
+            'commentId': comment.id
+        }) }}" method="post" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
         </form>
     {% endif %}
 </div>

@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/posts/{postId}/vote')]
+#[Route('/posts/{id}/vote')]
 class VoteController extends AbstractController
 {
     public function __construct(
@@ -34,7 +34,7 @@ class VoteController extends AbstractController
             $this->addFlash('error', 'Type de vote invalide.');
 
             return $this->redirectToRoute('post_show', [
-                'postId' => $post->getId()
+                'id' => $post->getId()
             ]);
         }
 
@@ -48,7 +48,7 @@ class VoteController extends AbstractController
         $this->addFlash('success', 'Votre vote a été pris en compte !');
 
         return $this->redirectToRoute('post_show', [
-            'postId' => $post->getId()
+            'id' => $post->getId()
         ]);
     }
 }

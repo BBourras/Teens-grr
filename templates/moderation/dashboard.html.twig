@@ -1,4 +1,5 @@
 {# templates/moderation/dashboard.html.twig #}
+{# affiche à la fois posts et commentaires auto-masqués #}
 
 {% extends 'base.html.twig' %}
 
@@ -7,52 +8,51 @@
 {% block body %}
 <div class="container mt-4">
 
-    {# Inclut le menu modération à gauche #}
     <div class="row">
+
+        {# ------------------------------ #}
+        {# Menu latéral pour navigation #}
+        {# ------------------------------ #}
         <div class="col-md-3">
             {% include 'partials/moderation/_moderation_menu.html.twig' with { posts: posts, comments: comments } %}
         </div>
 
+        {# ------------------------------ #}
+        {# Contenu principal : posts et commentaires masqués #}
+        {# ------------------------------ #}
         <div class="col-md-9">
-            {# Affiche les flash messages #}
-            {% include 'partials/_flash_messages.html.twig' %}
 
+            {# Flash messages pour feedback utilisateur #}
+            {% include 'partials/flash/_flash_messages.html.twig' %}
+
+            {# ------------------------------ #}
+            {# POSTS AUTO-MASQUÉS #}
+            {# ------------------------------ #}
             <h2>Posts auto-masqués</h2>
             {% if posts is empty %}
                 <p>Aucun post masqué pour le moment.</p>
             {% else %}
                 {% for post in posts %}
-                    {# Réutilise le _post_card.html.twig #}
-                    {% include 'partials/_post_card.html.twig' with { post: post } %}
-                    {# Ajoute un bouton restauration pour les modérateurs #}
-                    <form action="{{ path('moderation_post_restore', { id: post.id }) }}" method="post" class="mb-3">
-                        <button type="submit" class="btn btn-sm btn-success">Restaurer</button>
-                    </form>
+                    {# Partial dédié à l'affichage et restauration d'un post #}
+                    {% include 'partials/moderation/_post_moderation_item.html.twig' with { post: post } %}
                 {% endfor %}
             {% endif %}
 
             <hr>
 
+            {# ------------------------------ #}
+            {# COMMENTAIRES AUTO-MASQUÉS #}
+            {# ------------------------------ #}
             <h2>Commentaires auto-masqués</h2>
             {% if comments is empty %}
                 <p>Aucun commentaire masqué pour le moment.</p>
             {% else %}
                 {% for comment in comments %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <p>{{ comment.content|slice(0, 200) }}...</p>
-                            <p class="text-muted">
-                                Par {{ comment.author.username }} • {{ comment.createdAt|date('d/m/Y H:i') }}
-                                sur <a href="{{ path('post_show', { postId: comment.post.id }) }}">{{ comment.post.title }}</a>
-                            </p>
-                            {# Bouton restauration #}
-                            <form action="{{ path('moderation_comment_restore', { id: comment.id }) }}" method="post">
-                                <button type="submit" class="btn btn-sm btn-success">Restaurer</button>
-                            </form>
-                        </div>
-                    </div>
+                    {# Partial dédié à l'affichage et restauration d'un commentaire #}
+                    {% include 'partials/moderation/_comment_moderation_item.html.twig' with { comment: comment } %}
                 {% endfor %}
             {% endif %}
+
         </div>
     </div>
 </div>

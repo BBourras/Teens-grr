@@ -1,0 +1,28 @@
+{# templates/partials/moderation/_post_moderation_item.html.twig #}
+{# Affichage d’un post signalé ou auto-masqué pour la modération #}
+
+<div class="post-item mb-3 p-3 border rounded shadow-sm">
+
+    {# Titre du post cliquable vers sa page #}
+    <h5>
+        <a href="{{ path('post_show', { 'id': post.id }) }}">
+            {{ post.title }}
+        </a>
+    </h5>
+
+    {# Auteur et date de création #}
+    <small class="text-muted">
+        Par {{ post.author.username }} le {{ post.createdAt|date('d/m/Y H:i') }}
+    </small>
+
+    {# Contenu du post, retour à la ligne conservé #}
+    <p class="mt-2">{{ post.content|nl2br }}</p>
+
+    {# Bouton pour restaurer le post (visible uniquement aux modérateurs) #}
+    <form action="{{ path('moderation_post_restore', { 'id': post.id }) }}" method="post" class="mt-2">
+        <button type="submit" class="btn btn-sm btn-success">
+            Restaurer
+        </button>
+    </form>
+
+</div>

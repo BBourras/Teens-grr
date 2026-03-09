@@ -1,0 +1,65 @@
+{# templates/security/login.html.twig #}
+{# Page de connexion utilisateur #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block body %}
+<div class="container mt-5" style="max-width: 400px;">
+    <h1 class="mb-4">Se connecter</h1>
+
+    {# Affiche une alerte si une erreur de connexion est survenue #}
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error.messageKey|trans(error.messageData, 'security') }}
+        </div>
+    {% endif %}
+
+    {# Si l'utilisateur est déjà connecté, on l'informe et propose un logout #}
+    {% if app.user %}
+        <div class="alert alert-info mb-3">
+            Vous êtes connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>.
+            <a href="{{ logout_path() }}">Se déconnecter</a>
+        </div>
+    {% endif %}
+
+    {# Formulaire de connexion #}
+    <form method="post">
+        <div class="mb-3">
+            <label for="inputEmail" class="form-label">Email</label>
+            <input type="email" 
+                   value="{{ last_username }}" 
+                   name="_username" 
+                   id="inputEmail" 
+                   class="form-control" 
+                   required 
+                   autofocus>
+        </div>
+
+        <div class="mb-3">
+            <label for="inputPassword" class="form-label">Mot de passe</label>
+            <input type="password" 
+                   name="_password" 
+                   id="inputPassword" 
+                   class="form-control" 
+                   required>
+        </div>
+
+        {# CSRF token pour sécurité #}
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+        {# Option "Se souvenir de moi" - à activer si configuré dans security.yaml #}
+        <div class="mb-3 form-check">
+            <input type="checkbox" name="_remember_me" id="remember_me" class="form-check-input">
+            <label for="remember_me" class="form-check-label">Se souvenir de moi</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+    </form>
+
+    <p class="mt-3 text-center">
+        Pas encore de compte ? <a href="{{ path('app_register') }}">S’inscrire</a>
+    </p>
+</div>
+{% endblock %}

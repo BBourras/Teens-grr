@@ -11,8 +11,10 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 
-#[Route('/posts/{postId}/comments')]
+
+#[Route('/posts/{id}/comments')]
 class CommentController extends AbstractController
 {
     public function __construct(
@@ -31,6 +33,7 @@ class CommentController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
 
         $comment = new Comment();
+
         $form = $this->createForm(CommentFormType::class, $comment);
         $form->handleRequest($request);
 
@@ -46,7 +49,7 @@ class CommentController extends AbstractController
         }
 
         return $this->redirectToRoute('post_show', [
-            'postId' => $post->getId()
+            'id' => $post->getId()
         ]);
     }
 
@@ -54,12 +57,13 @@ class CommentController extends AbstractController
      * Suppression logique d’un commentaire.
      * Permission gérée par Voter (COMMENT_DELETE).
      */
-    #[Route('/{commentId}/delete', name: 'comment_delete', methods: ['POST', 'DELETE'])]
-    public function delete(Post $post, Comment $comment): Response
-    {
+    #[Route('/{commentId}/delete', name: 'comment_delete', methods: ['POST'])]
+    public function delete(
+        Post $post,
+        #[MapEntity(mapping: ['commentId' => 'id'])] Comment $comment
+    ): Response {
         $this->denyAccessUnlessGranted('COMMENT_DELETE', $comment);
 
-        // Sécurité supplémentaire : vérifie l'appartenance au post
         if ($comment->getPost() !== $post) {
             throw $this->createNotFoundException('Commentaire non trouvé pour ce post.');
         }
@@ -69,7 +73,7 @@ class CommentController extends AbstractController
         $this->addFlash('success', 'Commentaire supprimé avec succès.');
 
         return $this->redirectToRoute('post_show', [
-            'postId' => $post->getId()
+            'id' => $post->getId()
         ]);
     }
 }

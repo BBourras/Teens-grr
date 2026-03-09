@@ -1,20 +1,44 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Accueil
-{% endblock %}
+{% block title %}Accueil{% endblock %}
 
 {% block body %}
 
-	<h1>Bienvenue sur Teens-grr 🔥</h1>
+    <div class="mb-5">
+        <h1>Bienvenue sur Teens-GRR 🔥</h1>
+        <p class="text-muted">
+            Les discussions les plus populaires et les plus récentes.
+        </p>
+    </div>
 
-	<h3 class="mt-4">🔥 Posts populaires</h3>
-	{% for post in topPosts %}
-		{% include 'partials/_post_card.html.twig' with { post: post } %}
-	{% endfor %}
+    {# =============================== #}
+    {# POSTS POPULAIRES               #}
+    {# =============================== #}
+    <section class="mb-5">
+        <h3>🔥 Posts populaires</h3>
 
-	<h3 class="mt-4">🆕 Derniers posts</h3>
-	{% for post in latestPosts %}
-		{% include 'partials/_post_card.html.twig' with { post: post } %}
-	{% endfor %}
+        {% if topPosts is empty %}
+            <p class="text-muted">Aucun post populaire pour le moment.</p>
+        {% else %}
+            {% for post in topPosts %}
+                {% include 'partials/posts/_post_card.html.twig' with { post: post } %}
+            {% endfor %}
+        {% endif %}
+    </section>
+
+    {# =============================== #}
+    {# DERNIERS POSTS                 #}
+    {# =============================== #}
+    <section>
+        <h3>🆕 Derniers posts</h3>
+
+        {% if latestPosts is empty %}
+            <p class="text-muted">Aucun post publié récemment.</p>
+        {% else %}
+            {% for post in latestPosts %}
+                {% include 'partials/posts/_post_card.html.twig' with { post: post } %}
+            {% endfor %}
+        {% endif %}
+    </section>
 
 {% endblock %}

@@ -1,21 +1,38 @@
 {# templates/partials/moderation/_moderation_menu.html.twig #}
-{# Menu latéral pour dashboard modération #}
+{# Menu latéral pour le dashboard de modération #}
 
 <div class="list-group mb-4">
-    <span class="list-group-item list-group-item-secondary fw-bold">Modération</span>
 
-    <a href="{{ path('moderation_dashboard') }}" class="list-group-item list-group-item-action">
+    {# Titre du menu #}
+    <span class="list-group-item list-group-item-secondary fw-bold">
+        Modération
+    </span>
+
+    {# Lien vers le dashboard principal #}
+    <a href="{{ path('moderation_dashboard') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
         Dashboard
-        {% if posts|length > 0 or comments|length > 0 %}
-            <span class="badge bg-danger float-end">{{ posts|length + comments|length }}</span>
+
+        {# Affiche un badge si au moins un post ou commentaire est masqué #}
+        {% set total_hidden = posts|length + comments|length %}
+        {% if total_hidden > 0 %}
+            <span class="badge bg-danger">{{ total_hidden }}</span>
         {% endif %}
     </a>
 
-    <a href="{{ path('moderation_posts_hidden') }}" class="list-group-item list-group-item-action">
+    {# Lien vers la liste complète des posts masqués #}
+    <a href="{{ path('moderation_posts_hidden') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
         Posts masqués
+        {% if posts|length > 0 %}
+            <span class="badge bg-warning">{{ posts|length }}</span>
+        {% endif %}
     </a>
 
-    <a href="{{ path('moderation_comments_hidden') }}" class="list-group-item list-group-item-action">
+    {# Lien vers la liste complète des commentaires masqués #}
+    <a href="{{ path('moderation_comments_hidden') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
         Commentaires masqués
+        {% if comments|length > 0 %}
+            <span class="badge bg-warning">{{ comments|length }}</span>
+        {% endif %}
     </a>
+
 </div>

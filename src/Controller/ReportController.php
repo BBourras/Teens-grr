@@ -22,7 +22,7 @@ class ReportController extends AbstractController
      * Signaler un post.
      * - Un utilisateur ne peut signaler qu’une fois (géré côté service)
      */
-    #[Route('/posts/{postId}/report', name: 'report_post', methods: ['POST'])]
+    #[Route('/posts/{id}/report', name: 'report_post', methods: ['POST'])]
     public function reportPost(Post $post, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -37,14 +37,14 @@ class ReportController extends AbstractController
         $this->addFlash('success', 'Post signalé.');
 
         return $this->redirectToRoute('post_show', [
-            'postId' => $post->getId()
+            'id' => $post->getId()
         ]);
     }
 
     /**
      * Signaler un commentaire.
      */
-    #[Route('/comments/{commentId}/report', name: 'report_comment', methods: ['POST'])]
+    #[Route('/comments/{id}/report', name: 'report_comment', methods: ['POST'])]
     public function reportComment(Comment $comment, Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -59,7 +59,7 @@ class ReportController extends AbstractController
         $this->addFlash('success', 'Commentaire signalé.');
 
         return $this->redirectToRoute('post_show', [
-            'postId' => $comment->getPost()->getId()
+            'id' => $comment->getPost()->getId()
         ]);
     }
 }

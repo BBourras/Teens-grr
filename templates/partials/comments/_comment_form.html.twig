@@ -1,7 +1,19 @@
-{# templates/partials/comments/_comment_form.html.twig #}
-{# Formulaire de création de commentaire #}
+{# Formulaire de création d’un commentaire #}
+{# Utilisé dans show.html.twig #}
 
-{{ form_start(form) }}
-    {{ form_row(form.content) }}
-    <button type="submit">Commenter</button>
+{# 
+   Important :
+   - L'action du formulaire doit pointer vers la route 'comment_create' avec l'ID du post
+   - La méthode doit être POST
+#}
+{{ form_start(form, {
+    'action': path('comment_create', {'id': post.id}),
+    'method': 'POST'
+}) }}
+
+{# Champ de contenu du commentaire #}
+{{ form_row(form.content) }}
+
+{# Bouton de soumission, label configurable #}<button type="submit"> {{ button_label|default('Publier') }}</button>
+
 {{ form_end(form) }}

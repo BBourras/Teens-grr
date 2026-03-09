@@ -1,11 +1,17 @@
 {# templates/partials/moderation/_comment_moderation_item.html.twig #}
+{# Affichage d’un commentaire signalé / auto-masqué pour la modération #}
 
-<div>
-    <p>{{ comment.content }}</p>
-    <small>Par {{ comment.author.username }} le {{ comment.createdAt|date('d/m/Y H:i') }}</small>
+<div class="comment-item mb-2 p-2 border rounded">
+    {# Contenu du commentaire avec retour à la ligne conservé #}
+    <p>{{ comment.content|nl2br }}</p>
 
-    {# Restaurer le commentaire #}
-    <form action="{{ path('moderation_comment_restore', {'id': comment.id}) }}" method="post">
-        <button type="submit">Restaurer</button>
+    {# Auteur et date de création #}
+    <small class="text-muted">
+        Par {{ comment.author.username }} le {{ comment.createdAt|date('d/m/Y H:i') }}
+    </small>
+
+    {# Formulaire pour restaurer le commentaire #}
+    <form action="{{ path('moderation_comment_restore', {'id': comment.id}) }}" method="post" class="mt-2">
+        <button type="submit" class="btn btn-sm btn-success">Restaurer</button>
     </form>
 </div>
