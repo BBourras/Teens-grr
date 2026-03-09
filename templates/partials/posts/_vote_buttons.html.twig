@@ -1,0 +1,47 @@
+{# 
+    Bloc de vote réutilisable pour un post.
+    - Affiche les boutons pour chaque type de réaction.
+    - Affiche le compteur de votes par type.
+    - Affiche le score pondéré total (reactionScore).
+    - Protégé pour les utilisateurs non connectés.
+#}
+
+{% if is_granted('ROLE_USER') %}
+    <form method="post" action="{{ path('vote_post', { id: post.id }) }}" class="d-flex gap-2 align-items-center">
+
+        {# ----------------------- #}
+        {# Bouton Laugh (😂) #}
+        {# postVotes.laugh contient le nombre de votes Laugh pour ce post #}
+        {# ----------------------- #}
+        <button name="type" value="laugh" class="btn btn-sm btn-warning">
+            😂 Laugh ({{ postVotes.laugh|default(0) }})
+        </button>
+
+        {# ----------------------- #}
+        {# Bouton Angry (😡) #}
+        {# ----------------------- #}
+        <button name="type" value="angry" class="btn btn-sm btn-danger">
+            😡 Angry ({{ postVotes.angry|default(0) }})
+        </button>
+
+        {# ----------------------- #}
+        {# Bouton Disillusioned (😏) #}
+        {# ----------------------- #}
+        <button name="type" value="disillusioned" class="btn btn-sm btn-secondary">
+            😏 Disillusioned ({{ postVotes.disillusioned|default(0) }})
+        </button>
+
+        {# ----------------------- #}
+        {# Score pondéré total #}
+        {# Ce score provient du champ dénormalisé Post::reactionScore #}
+        {# ----------------------- #}
+        <span class="ms-3">
+            Score pondéré : <strong>{{ post.reactionScore }}</strong>
+        </span>
+    </form>
+{% else %}
+    {# Invite à se connecter si non connecté #}
+    <div class="alert alert-light">
+        <a href="{{ path('app_login') }}">Connectez-vous</a> pour voter.
+    </div>
+{% endif %}

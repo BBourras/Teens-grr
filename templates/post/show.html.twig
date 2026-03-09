@@ -1,105 +1,106 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}
-	{{ post.title }}
-{% endblock %}
+{% block title %}{{ post.title }}{% endblock %}
 
 {% block body %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
 
-	<div class="card mb-4 shadow-sm">
-		<div class="card-body">
+        {# ========================= #}
+        {# TITRE ET MÉTADATA DU POST #}
+        {# ========================= #}
+        <h2>{{ post.title }}</h2>
 
-			{# ========================= #}
-			{# TITRE ET META DU POST #}
-			{# ========================= #}<h2>{{ post.title }}
-			</h2>
+        <p class="text-muted">
+            Par <strong>{{ post.author.username }}</strong>
+            • {{ post.createdAt|date('d/m/Y H:i') }}
+        </p>
 
-				<p class="text-muted"> Par
-				<strong>{{ post.author.username }}</strong>
-				•
-				{{ post.createdAt|date('d/m/Y H:i') }}
-			</p>
+        {# Alerte si post non publié #}
+        {% if post.status.name != 'PUBLISHED' %}
+            <div class="alert alert-warning">
+                ⚠ Ce post est actuellement
+                {{ post.status.name|lower|replace({'_':' '}) }}
+            </div>
+        {% endif %}
 
-			{# Alerte si le post n'est pas publié #}
-			{% if post.status.name != 'PUBLISHED' %}
-				<div class="alert alert-warning">
-					⚠ Ce post est actuellement
-					{{ post.status.name|lower|replace({'_':' '}) }}
-				</div>
-			{% endif %}
+        <p class="mt-3">
+            {{ post.content|nl2br }}
+        </p>
 
-			<p class="mt-3">
-				{{ post.content|nl2br }}
-			</p>
+        <hr>
 
-			<hr>
+        {# ========================= #}
+        {# BLOC VOTE (réutilisable) #}
+        {# ========================= #}
+        {# postVotes est fourni par le contrôleur #}
+        {% include 'partials/posts/_vote_buttons.html.twig' with {
+            post: post,
+            postVotes: postVotes
+        } %}
 
-			{# ========================= #}
-			{# FORMULAIRE DE VOTE #}
-			{# ========================= #}
-				<div class="mb-3"> <form method="post" action="{{ path('vote_post', { id: post.id }) }}" class="d-flex gap-2">
+        <hr>
 
-					<button name="type" value="like" class="btn btn-sm btn-success">👍 Like</button>
-					<button name="type" value="laugh" class="btn btn-sm btn-warning">😂 Laugh</button>
-					<button name="type" value="angry" class="btn btn-sm btn-danger">😡 Angry</button>
+        {# ========================= #}
+        {# ACTIONS SUR LE POST #}
+        {# ========================= #}
+        <div class="d-flex gap-2">
 
-					<span class="ms-3 align-self-center">
-						Score :
-						<strong>{{ post.reactionScore }}</strong>
-					</span>
-				</form>
-			</div>
+            {% if is_granted('POST_EDIT', post) %}
+                <a href="{{ path('post_edit', { id: post.id }) }}"
+                   class="btn btn-sm btn-outline-secondary">
+                    Modifier
+                </a>
+            {% endif %}
 
-			{# ========================= #}
-			{# ACTIONS SUR LE POST #}
-			{# ========================= #}
-				<div
-				class="d-flex gap-2"> {# Modifier si autorisé #}
-				{% if is_granted('POST_EDIT', post) %}
-					<a href="{{ path('post_edit', { id: post.id }) }}" class="btn btn-sm btn-outline-secondary">
-						Modifier
-					</a>
-				{% endif %}
+            {% if is_granted('ROLE_USER') %}
+                <form method="post"
+                      action="{{ path('report_post', { id: post.id }) }}">
+                    <button class="btn btn-sm btn-outline-warning">
+                        Signaler
+                    </button>
+                </form>
+            {% endif %}
 
-				{# Signaler si connecté #}
-				{% if is_granted('ROLE_USER') %}
-					<form method="post" action="{{ path('report_post', { id: post.id }) }}">
-						<button class="btn btn-sm btn-outline-warning">
-							Signaler
-						</button>
-					</form>
-				{% endif %}
+        </div>
 
-			</div>
-		</div>
-	</div>
+    </div>
+</div>
 
-	{# ========================= #}
-	{# COMMENTAIRES #}
-	{# ========================= #}<h4 class="mb-3"> 💬 Commentaires ({{ post.commentCount }})</h4>
+{# ========================= #}
+{# COMMENTAIRES #}
+{# ========================= #}
 
-	{# Formulaire de commentaire (accessible aux utilisateurs connectés) #}
-	{% if is_granted('ROLE_USER') %}
-		{# Correction : le formulaire doit poster vers la route comment_create #}
-		{{ form_start(form, {
+<h4 class="mb-3">
+    💬 Commentaires ({{ post.commentCount }})
+</h4>
+
+{% if is_granted('ROLE_USER') %}
+    {{ form_start(form, {
         'action': path('comment_create', {'id': post.id}),
         'method': 'POST'
     }) }}
-		{{ form_row(form.content) }}
-		<button type="submit">{{ button_label|default('Publier') }}</button>
-		{{ form_end(form) }}
-	{% else %}
-		<div class="alert alert-light">
-			<a href="{{ path('app_login') }}">Connectez-vous</a>
-			pour commenter.
-		</div>
-	{% endif %}
 
-	{# Boucle sur les commentaires du post #}
-	{% for comment in post.comments %}
-		{% include 'partials/comments/_comment.html.twig' with { comment: comment } %}
-	{% else %}
-		<p class="text-muted">Aucun commentaire pour le moment.</p>
-	{% endfor %}
+        {{ form_row(form.content) }}
+
+        <button type="submit" class="btn btn-primary">
+            {{ button_label|default('Publier') }}
+        </button>
+
+    {{ form_end(form) }}
+{% else %}
+    <div class="alert alert-light">
+        <a href="{{ path('app_login') }}">Connectez-vous</a>
+        pour commenter.
+    </div>
+{% endif %}
+
+{% for comment in post.comments %}
+    {% include 'partials/comments/_comment_item.html.twig' with {
+        comment: comment
+    } %}
+{% else %}
+    <p class="text-muted">Aucun commentaire pour le moment.</p>
+{% endfor %}
 
 {% endblock %}

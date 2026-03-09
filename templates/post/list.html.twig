@@ -15,7 +15,22 @@
 </div>
 
 {% for post in posts %}
-    {% include 'partials/posts/_post_card.html.twig' with { post: post } %}
+
+    {# Carte principale du post #}
+    {% include 'partials/posts/_post_card.html.twig' with {
+        post: post
+    } %}
+
+    {# ========================= #}
+    {# BLOC VOTE réutilisable #}
+    {# ========================= #}
+    {% include 'partials/posts/_vote_buttons.html.twig' with {
+        post: post,
+        postVotes: voteService.getScore(post)
+    } %}
+
+    <hr>
+
 {% else %}
     <div class="alert alert-info">
         Aucun post pour le moment.

@@ -1,7 +1,6 @@
 {# templates/partials/posts/_post_item.html.twig #}
 {# Affichage minimaliste d’un post dans une liste #}
 
-{# templates/partials/posts/_post_item.html.twig #}
 <div>
     <h5><a href="{{ path('post_show', { postId: post.id }) }}">{{ post.title }}</a></h5>
     <p>{{ post.content|slice(0, 100) }}{% if post.content|length > 100 %}...{% endif %}</p>
