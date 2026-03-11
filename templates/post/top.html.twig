@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}🔥 Top du moment{% endblock %}
+
+{% block body %}
+<h1 class="mb-4">🔥 Top du moment</h1>
+<p class="text-muted">
+    Les posts qui font le plus réagir en ce moment.
+</p>
+
+{% for post in posts %}
+    {% include 'partials/posts/_post_card.html.twig' with { post: post } %}
+{% else %}
+    <div class="alert alert-info">
+        Rien ne fait encore vibrer la communauté.
+    </div>
+{% endfor %}
+{% endblock %}

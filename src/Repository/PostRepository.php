@@ -8,6 +8,14 @@ use App\Enum\VoteType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * Repository principal des posts.
+ *
+ * Contient :
+ * - Derniers posts
+ * - Top du moment (algo mixte + récence)
+ * - Légendes (impact durable humour)
+ */
 class PostRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -15,12 +23,15 @@ class PostRepository extends ServiceEntityRepository
         parent::__construct($registry, Post::class);
     }
 
+    /**
+     * ===============================
+     * Derniers posts publiés
+     * ===============================
+     */
     public function findLatest(int $limit = 10): array
     {
         return $this->createQueryBuilder('p')
-            ->leftJoin('p.author', 'a')
-            ->addSelect('a')
-            ->andWhere('p.status = :status')
+            ->where('p.status = :status')
             ->setParameter('status', PostStatus::PUBLISHED)
             ->orderBy('p.createdAt', 'DESC')
             ->setMaxResults($limit)
@@ -28,51 +39,140 @@ class PostRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function findTopScored(int $limit = 10): array
+    /**
+     * ===============================
+     * 🔥 TOP DU MOMENT
+     * ===============================
+     *
+     * Algorithme interne (invisible) :
+     *
+     * 1. Humour = Laugh + Disillusioned
+     * 2. Colère = Angry
+     * 3. Volume = total votes
+     *
+     * ScoreMoment =
+     *      (Humour × 3)
+     *    - (Colère × 1.5)
+     *    + (Volume × 0.5)
+     *
+     * Puis déclin temporel :
+     *
+     * FinalScore = ScoreMoment / (heures + 6)^1.2
+     *
+     * Objectif :
+     * - Favoriser humour / ironie
+     * - Limiter la domination de la colère
+     * - Booster la fraîcheur
+     */
+    public function findTopDuMoment(int $limit = 10): array
     {
-        return $this->createQueryBuilder('p')
+        $posts = $this->createQueryBuilder('p')
             ->leftJoin('p.votes', 'v')
-            ->addSelect('
-                SUM(
-                    CASE 
-                        WHEN v.type = :like THEN 1
-                        WHEN v.type = :laugh THEN 2
-                        WHEN v.type = :angry THEN -1
-                        ELSE 0
-                    END
-                ) AS HIDDEN score
-            ')
-            ->andWhere('p.status = :status')
+            ->addSelect('v')
+            ->where('p.status = :status')
             ->setParameter('status', PostStatus::PUBLISHED)
-            ->setParameter('like', VoteType::LIKE)
-            ->setParameter('laugh', VoteType::LAUGH)
-            ->setParameter('angry', VoteType::ANGRY)
-            ->groupBy('p.id')
-            ->orderBy('score', 'DESC')
-            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+
+        $now = new \DateTimeImmutable();
+        $scored = [];
+
+        foreach ($posts as $post) {
+
+            $laugh = 0;
+            $disillusioned = 0;
+            $angry = 0;
+
+            foreach ($post->getVotes() as $vote) {
+                match ($vote->getType()) {
+                    VoteType::LAUGH => $laugh++,
+                    VoteType::DISILLUSIONED => $disillusioned++,
+                    VoteType::ANGRY => $angry++,
+                };
+            }
+
+            $humour = $laugh + $disillusioned;
+            $volume = $laugh + $disillusioned + $angry;
+
+            $scoreMoment =
+                ($humour * 3)
+                - ($angry * 1.5)
+                + ($volume * 0.5);
+
+            // Calcul ancienneté en heures
+            $interval = $post->getCreatedAt()->diff($now);
+            $hours = ($interval->days * 24) + $interval->h;
+
+            $finalScore = $scoreMoment / pow(($hours + 6), 1.2);
+
+            $scored[] = [
+                'post' => $post,
+                'score' => $finalScore,
+            ];
+        }
+
+        usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
+
+        return array_slice(
+            array_map(fn($row) => $row['post'], $scored),
+            0,
+            $limit
+        );
     }
 
-    public function findPaginated(int $limit, int $offset): array
+    /**
+     * ===============================
+     * 🏛 LÉGENDES
+     * ===============================
+     *
+     * Classement durable.
+     * Pas de déclin temporel.
+     *
+     * Score = (Laugh + Disillusioned) × 2
+     *
+     * Objectif :
+     * - Mettre en avant les posts cultes
+     * - Construire la mémoire du site
+     */
+    public function findLegendes(int $limit = 10): array
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.status = :status')
+        $posts = $this->createQueryBuilder('p')
+            ->leftJoin('p.votes', 'v')
+            ->addSelect('v')
+            ->where('p.status = :status')
             ->setParameter('status', PostStatus::PUBLISHED)
-            ->orderBy('p.createdAt', 'DESC')
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
-    }
 
-    public function countPublished(): int
-    {
-        return (int) $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->andWhere('p.status = :status')
-            ->setParameter('status', PostStatus::PUBLISHED)
-            ->getQuery()
-            ->getSingleScalarResult();
+        $scored = [];
+
+        foreach ($posts as $post) {
+
+            $laugh = 0;
+            $disillusioned = 0;
+
+            foreach ($post->getVotes() as $vote) {
+                match ($vote->getType()) {
+                    VoteType::LAUGH => $laugh++,
+                    VoteType::DISILLUSIONED => $disillusioned++,
+                    default => null,
+                };
+            }
+
+            $score = ($laugh + $disillusioned) * 2;
+
+            $scored[] = [
+                'post' => $post,
+                'score' => $score,
+            ];
+        }
+
+        usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
+
+        return array_slice(
+            array_map(fn($row) => $row['post'], $scored),
+            0,
+            $limit
+        );
     }
 }

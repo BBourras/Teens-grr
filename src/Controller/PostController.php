@@ -21,14 +21,17 @@ class PostController extends AbstractController
     public function __construct(
         private PostService $postService,
         private CommentService $commentService,
-        private VoteService $voteService,  // ✅ Injection VoteService
+        private VoteService $voteService,
         private Security $security
     ) {}
 
     /**
-     * Liste des posts publics.
-     * - Récupère les derniers posts.
-     * - Passage de voteService pour calculer les compteurs par emoji en Twig.
+     * =====================================================
+     * 📰 LISTE DES POSTS (Accueil / Flux principal)
+     * =====================================================
+     *
+     * - Affiche les derniers posts publiés
+     * - Passe voteService pour affichage des compteurs emoji
      */
     #[Route('/', name: 'post_list', methods: ['GET'])]
     public function list(): Response
@@ -37,12 +40,55 @@ class PostController extends AbstractController
 
         return $this->render('post/list.html.twig', [
             'posts' => $posts,
-            'voteService' => $this->voteService, // 💡 permet d’appeler getScore(post) en Twig
+            'voteService' => $this->voteService, // utilisé dans Twig pour getScore(post)
         ]);
     }
 
     /**
-     * Création d’un nouveau post.
+     * =====================================================
+     * 🔥 TOP DU MOMENT
+     * =====================================================
+     *
+     * Classement intelligent :
+     * - Favorise 😏 + 😂
+     * - Pénalise 😡
+     * - Boost les posts récents
+     *
+     * Algorithme invisible côté utilisateur.
+     */
+    #[Route('/top', name: 'post_top', methods: ['GET'])]
+    public function top(): Response
+    {
+        $posts = $this->postService->getTopDuMoment(20);
+
+        return $this->render('post/top.html.twig', [
+            'posts' => $posts,
+        ]);
+    }
+
+    /**
+     * =====================================================
+     * 🏛 LÉGENDES
+     * =====================================================
+     *
+     * Classement durable :
+     * - Basé uniquement sur l'humour
+     * - Pas de déclin temporel
+     */
+    #[Route('/legendes', name: 'post_legendes', methods: ['GET'])]
+    public function legendes(): Response
+    {
+        $posts = $this->postService->getLegendes(20);
+
+        return $this->render('post/legendes.html.twig', [
+            'posts' => $posts,
+        ]);
+    }
+
+    /**
+     * =====================================================
+     * ✍️ CRÉATION D’UN POST
+     * =====================================================
      */
     #[Route('/new', name: 'post_new', methods: ['GET', 'POST'])]
     public function new(Request $request): Response
@@ -54,10 +100,17 @@ class PostController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->postService->create($post, $this->security->getUser());
+
+            $this->postService->create(
+                $post,
+                $this->security->getUser()
+            );
+
             $this->addFlash('success', 'Post créé avec succès.');
 
-            return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
+            return $this->redirectToRoute('post_show', [
+                'id' => $post->getId()
+            ]);
         }
 
         return $this->render('post/new.html.twig', [
@@ -66,44 +119,51 @@ class PostController extends AbstractController
     }
 
     /**
-     * Affichage d’un post.
+     * =====================================================
+     * 📄 AFFICHAGE D’UN POST
+     * =====================================================
+     *
      * - Vérifie la visibilité
      * - Charge les commentaires visibles
-     * - Prépare le formulaire de commentaire si connecté
-     * - Prépare les votes par emoji
+     * - Prépare formulaire commentaire si connecté
+     * - Charge les compteurs emoji
      */
     #[Route('/{id}', name: 'post_show', methods: ['GET'])]
     public function show(Post $post): Response
     {
         $user = $this->getUser();
 
+        // Vérification visibilité (modération incluse)
         if (!$this->postService->isVisible($post, $user)) {
             throw $this->createNotFoundException();
         }
 
-        $comments = $this->commentService->getVisibleByPost($post, $user);
+        $comments = $this->commentService
+            ->getVisibleByPost($post, $user);
 
-        // Préparation formulaire commentaire si connecté
         $formView = null;
+
         if ($user) {
             $comment = new Comment();
             $form = $this->createForm(CommentFormType::class, $comment);
             $formView = $form->createView();
         }
 
-        // 🔹 Récupère le nombre de votes par type pour Twig
+        // Récupération des compteurs par emoji
         $postVotes = $this->voteService->getScore($post);
 
         return $this->render('post/show.html.twig', [
             'post' => $post,
             'comments' => $comments,
             'form' => $formView,
-            'postVotes' => $postVotes, // 💡 compteur par emoji
+            'postVotes' => $postVotes,
         ]);
     }
 
     /**
-     * Édition d’un post.
+     * =====================================================
+     * ✏️ ÉDITION D’UN POST
+     * =====================================================
      */
     #[Route('/{id}/edit', name: 'post_edit', methods: ['GET', 'POST'])]
     public function edit(Post $post, Request $request): Response
@@ -114,10 +174,14 @@ class PostController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->postService->update($post);
-            $this->addFlash('success', 'Post mis à jour avec succès.');
 
-            return $this->redirectToRoute('post_show', ['id' => $post->getId()]);
+            $this->postService->update($post);
+
+            $this->addFlash('success', 'Post mis à jour.');
+
+            return $this->redirectToRoute('post_show', [
+                'id' => $post->getId()
+            ]);
         }
 
         return $this->render('post/edit.html.twig', [
@@ -127,15 +191,18 @@ class PostController extends AbstractController
     }
 
     /**
-     * Suppression logique d’un post.
+     * =====================================================
+     * 🗑 SUPPRESSION LOGIQUE (Soft Delete)
+     * =====================================================
      */
-    #[Route('/{id}/delete', name: 'post_delete', methods: ['POST', 'DELETE'])]
+    #[Route('/{id}/delete', name: 'post_delete', methods: ['POST'])]
     public function delete(Post $post): Response
     {
         $this->denyAccessUnlessGranted('POST_DELETE', $post);
 
         $this->postService->delete($post);
-        $this->addFlash('success', 'Post supprimé avec succès.');
+
+        $this->addFlash('success', 'Post supprimé.');
 
         return $this->redirectToRoute('post_list');
     }

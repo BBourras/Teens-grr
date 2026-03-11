@@ -8,6 +8,14 @@ use App\Enum\PostStatus;
 use App\Repository\PostRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
+/**
+ * Service métier central pour la gestion des posts.
+ *
+ * Contient :
+ * - Création / suppression / restauration
+ * - Récupération des listes publiques
+ * - Classements éditoriaux (Top du moment / Légendes)
+ */
 class PostService
 {
     public function __construct(
@@ -16,7 +24,9 @@ class PostService
     ) {}
 
     /**
-     * Création d’un post.
+     * ============================================
+     * Création d’un post
+     * ============================================
      * - Assigne l’auteur
      * - Définit le statut initial
      * - Persiste en base
@@ -31,7 +41,10 @@ class PostService
     }
 
     /**
-     * Mise à jour d’un post. Doctrine détecte automatiquement les modifications.
+     * ============================================
+     * Mise à jour
+     * ============================================
+     * Doctrine détecte automatiquement les changements.
      */
     public function update(Post $post): void
     {
@@ -39,7 +52,10 @@ class PostService
     }
 
     /**
-     * Suppression logique (soft delete). On ne supprime pas physiquement en base.
+     * ============================================
+     * Suppression logique (soft delete)
+     * ============================================
+     * On ne supprime pas physiquement en base.
      */
     public function delete(Post $post): void
     {
@@ -50,7 +66,7 @@ class PostService
     }
 
     /**
-     * Suppression définitive d’un post.
+     * Suppression définitive en base.
      */
     public function hardDelete(Post $post): void
     {
@@ -59,20 +75,20 @@ class PostService
     }
 
     /**
-     * Récupère les derniers posts publiés.
-     * Utilisé pour la page d’accueil ou la liste.
+     * ============================================
+     * Derniers posts publiés
+     * ============================================
      */
     public function getLatest(int $limit = 10): array
     {
-        return $this->postRepository->findBy(
-            ['status' => PostStatus::PUBLISHED],
-            ['createdAt' => 'DESC'],
-            $limit
-        );
+        return $this->postRepository->findLatest($limit);
     }
 
     /**
-     * Récupère les posts avec le meilleur score de réaction.
+     * ============================================
+     * Classement simple par reactionScore
+     * ============================================
+     * (score dénormalisé stocké en base)
      */
     public function getTopScored(int $limit = 5): array
     {
@@ -84,8 +100,42 @@ class PostService
     }
 
     /**
-     * Vérifie si un post est visible pour un utilisateur donné.
-     * - Visible si PUBLISHED, Visible si modérateur, Sinon non visible
+     * ============================================
+     * 🔥 TOP DU MOMENT
+     * ============================================
+     *
+     * Classement intelligent :
+     * - Favorise Laugh + Disillusioned
+     * - Pénalise Angry
+     * - Applique un déclin temporel
+     *
+     * Algorithme invisible côté utilisateur.
+     */
+    public function getTopDuMoment(int $limit = 10): array
+    {
+        return $this->postRepository->findTopDuMoment($limit);
+    }
+
+    /**
+     * ============================================
+     * 🏛 LÉGENDES
+     * ============================================
+     *
+     * Classement durable :
+     * - Basé uniquement sur l'humour
+     * - Pas de déclin temporel
+     */
+    public function getLegendes(int $limit = 10): array
+    {
+        return $this->postRepository->findLegendes($limit);
+    }
+
+    /**
+     * ============================================
+     * Visibilité d’un post
+     * ============================================
+     * - Visible si publié
+     * - Visible pour modérateur
      */
     public function isVisible(Post $post, ?User $user): bool
     {
@@ -101,7 +151,9 @@ class PostService
     }
 
     /**
-     * Récupère les posts auto-masqués suite aux signalements.
+     * ============================================
+     * Posts auto-masqués (modération automatique)
+     * ============================================
      */
     public function getAutoHidden(): array
     {
@@ -112,7 +164,9 @@ class PostService
     }
 
     /**
-     * Restaurer un post (après suppression ou auto-hide)
+     * ============================================
+     * Restaurer un post
+     * ============================================
      */
     public function restore(Post $post): void
     {

@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}🏛 Légendes{% endblock %}
+
+{% block body %}
+<h1 class="mb-4">🏛 Légendes</h1>
+<p class="text-muted">
+    Les posts qui ont marqué durablement le site.
+</p>
+
+{% for post in posts %}
+    {% include 'partials/posts/_post_card.html.twig' with { post: post } %}
+{% else %}
+    <div class="alert alert-info">
+        Aucune légende pour l’instant.
+    </div>
+{% endfor %}
+{% endblock %}

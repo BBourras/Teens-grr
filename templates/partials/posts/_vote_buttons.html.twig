@@ -1,44 +1,85 @@
-{# 
+{#  
     Bloc de vote réutilisable pour un post.
     - Affiche les boutons pour chaque type de réaction.
     - Affiche le compteur de votes par type.
+    - Affiche le pourcentage de chaque réaction.
     - Affiche le score pondéré total (reactionScore).
     - Protégé pour les utilisateurs non connectés.
 #}
 
+{# =============================== #}
+{# Sécurisation des valeurs        #}
+{# =============================== #}
+
+{% set laugh = postVotes.laugh|default(0) %}
+{% set angry = postVotes.angry|default(0) %}
+{% set disillusioned = postVotes.disillusioned|default(0) %}
+
+{# Total des réactions #}
+{% set total = laugh + angry + disillusioned %}
+
+{# Calcul des pourcentages (évite division par 0) #}
+{% set laughPercent = total > 0 ? (laugh / total * 100)|round : 0 %}
+{% set angryPercent = total > 0 ? (angry / total * 100)|round : 0 %}
+{% set disPercent = total > 0 ? (disillusioned / total * 100)|round : 0 %}
+
 {% if is_granted('ROLE_USER') %}
-    <form method="post" action="{{ path('vote_post', { id: post.id }) }}" class="d-flex gap-2 align-items-center">
+    <form method="post"
+          action="{{ path('vote_post', { id: post.id }) }}"
+          class="d-flex gap-3 align-items-center flex-wrap">
 
         {# ----------------------- #}
-        {# Bouton Laugh (😂) #}
-        {# postVotes.laugh contient le nombre de votes Laugh pour ce post #}
+        {# Bouton Laugh (😂)       #}
         {# ----------------------- #}
         <button name="type" value="laugh" class="btn btn-sm btn-warning">
-            😂 Laugh ({{ postVotes.laugh|default(0) }})
-        </button>
-
-        {# ----------------------- #}
-        {# Bouton Angry (😡) #}
-        {# ----------------------- #}
-        <button name="type" value="angry" class="btn btn-sm btn-danger">
-            😡 Angry ({{ postVotes.angry|default(0) }})
+            😂 {{ laugh }} ({{ laughPercent }}%)
         </button>
 
         {# ----------------------- #}
         {# Bouton Disillusioned (😏) #}
         {# ----------------------- #}
         <button name="type" value="disillusioned" class="btn btn-sm btn-secondary">
-            😏 Disillusioned ({{ postVotes.disillusioned|default(0) }})
+            😏 {{ disillusioned }} ({{ disPercent }}%)
         </button>
 
         {# ----------------------- #}
-        {# Score pondéré total #}
-        {# Ce score provient du champ dénormalisé Post::reactionScore #}
+        {# Bouton Angry (😡)       #}
+        {# ----------------------- #}
+        <button name="type" value="angry" class="btn btn-sm btn-danger">
+            😡 {{ angry }} ({{ angryPercent }}%)
+        </button>
+
+        {# ----------------------- #}
+        {# Score pondéré total     #}
+        {# Champ dénormalisé Post::reactionScore #}
         {# ----------------------- #}
         <span class="ms-3">
-            Score pondéré : <strong>{{ post.reactionScore }}</strong>
+            Score : <strong>{{ post.reactionScore }}</strong>
         </span>
     </form>
+
+    {# =============================== #}
+    {# Badges dynamiques fun          #}
+    {# =============================== #}
+
+    {% if total > 0 %}
+        <div class="mt-2">
+
+            {% if laugh > 20 %}
+                <span class="badge bg-success">😂 Explosion de rires</span>
+            {% endif %}
+
+            {% if disillusioned > laugh %}
+                <span class="badge bg-dark">😏 Ironie maximale</span>
+            {% endif %}
+
+            {% if angryPercent > 40 %}
+                <span class="badge bg-danger">🌶 Légèrement salé</span>
+            {% endif %}
+
+        </div>
+    {% endif %}
+
 {% else %}
     {# Invite à se connecter si non connecté #}
     <div class="alert alert-light">
